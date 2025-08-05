@@ -1,0 +1,8 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/appIcon.png"
+  background_color: "#ffffff" # white background
+  adaptive_icon_background: "#ffffff" # for Android 8.0+
+  adaptive_icon_foreground: "assets/icons/appIcon.png" # same as image_path or another
+  remove_alpha_ios: true # remove alpha channel for iOS icons

@@ -8,8 +8,8 @@ class EOutlinedButtonTheme {
   static final lightOutlinedButtonTheme = OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       elevation: 0,
-      foregroundColor: Colors.black,
-      side: const BorderSide(color: XColors.primary),
+      foregroundColor: XColors.secondary,
+      side: const BorderSide(color: XColors.secondary),
       textStyle: const TextStyle(
         fontSize: XSizes.fontSizeMd,
         color: Colors.black,

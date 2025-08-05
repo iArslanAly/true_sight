@@ -4,9 +4,8 @@ class XColors {
   XColors._();
 
   // App Basic Colors
-  static const Color tertiary = Color(0xFF3B3833);
-  static const Color secondary = Color(0XFFFFFFFF);
-  static const Color primary = Color(0xFFFF6565);
+  static const Color secondary = Color.fromARGB(255, 26, 26, 26);
+  static const Color primary = Color.fromARGB(255, 255, 255, 255);
   static const Color amber = Color.fromARGB(255, 255, 191, 0);
   // Text Colors
   static const Color textPrimary = Color(0XFFFFFFFF);

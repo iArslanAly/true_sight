@@ -1,20 +1,7 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
-import 'routes/app_router.dart';
+import 'package:true_sight/app/app.dart';
+import 'package:true_sight/app/providers.dart';
 
 void main() {
-  runApp(const TrueSightApp());
-}
-
-class TrueSightApp extends StatelessWidget {
-  const TrueSightApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'TrueSight',
-      routerConfig: appRouter,
-      debugShowCheckedModeBanner: false,
-    );
-  }
+  runApp(AppProviders.buildBlocs(const App()));
 }

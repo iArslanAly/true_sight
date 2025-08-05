@@ -12,9 +12,8 @@ import 'package:true_sight/core/theme/customTheme/text_field_theme.dart';
 import 'package:true_sight/core/theme/customTheme/text_theme.dart';
 import 'package:flutter/material.dart';
 
-
-class EAppThemme {
-  EAppThemme._();
+class TAppTheme {
+  TAppTheme._();
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
