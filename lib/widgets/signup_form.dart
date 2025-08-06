@@ -96,9 +96,7 @@ class SignupForm extends StatelessWidget {
               children: [
                 Text(
                   XTextStrings.authAlreadyHaveAccount,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 Text(
                   XTextStrings.authLoginButton,

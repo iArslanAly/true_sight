@@ -29,7 +29,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       // context.read<AuthBloc>().add(ResetPasswordRequested(email));
 
       // Navigate to a confirmation screen or show a success message
-      context.go('/verify');
+      context.go('/otp');
     }
   }
 
@@ -96,8 +96,9 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                                 const SizedBox(height: XSizes.spaceBtwItems),
                                 Text(
                                   XTextStrings.authForgotPasswordSubtitle,
-                                  style: Theme.of(context).textTheme.titleLarge!
-                                      .apply(fontWeightDelta: XSizes.i2),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleSmall!,
                                 ),
                                 const SizedBox(height: XSizes.spaceBtwSections),
                                 TextFormField(

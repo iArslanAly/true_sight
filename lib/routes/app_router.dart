@@ -32,9 +32,9 @@ final GoRouter appRouter = GoRouter(
       child: const ForgetPasswordScreen(),
     ),
     smoothFadeRoute(
-      path: '/verify',
-      name: 'verify',
-      child: OtpVerificationScreen(),
+      path: '/otp',
+      name: 'otp',
+      child: const OtpVerificationScreen(),
     ),
     smoothFadeRoute(
       path: '/update-password',

@@ -87,8 +87,8 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                               // New Password
                               TextFormField(
                                 controller: _newPassController,
-
                                 validator: EValidators.validatePassword,
+                                keyboardType: TextInputType.visiblePassword,
                                 decoration: InputDecoration(
                                   labelText: 'New Password',
                                   prefixIcon: const Icon(
@@ -106,6 +106,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                               // Confirm Password
                               TextFormField(
                                 controller: _confirmPassController,
+                                keyboardType: TextInputType.visiblePassword,
                                 validator: (val) =>
                                     EValidators.validateConfirmPassword(
                                       val,
