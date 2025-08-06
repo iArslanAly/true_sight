@@ -2,14 +2,13 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:true_sight/core/localStorage/remember_me.dart';
-import 'package:true_sight/features/auth/presentation/blocs/authCubit/auth_form_state.dart';
+import 'package:true_sight/features/auth/presentation/cubit/login/login_form_state.dart';
 
-class AuthFormCubit extends Cubit<AuthFormState> {
-  AuthFormCubit()
-    : super(const AuthFormState(isPasswordVisible: true, rememberMe: false));
+class LoginFormCubit extends Cubit<LoginFormState> {
+  LoginFormCubit()
+    : super(const LoginFormState(isPasswordVisible: true, rememberMe: false));
 
   final formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -41,7 +40,6 @@ class AuthFormCubit extends Cubit<AuthFormState> {
 
   @override
   Future<void> close() {
-    nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     return super.close();

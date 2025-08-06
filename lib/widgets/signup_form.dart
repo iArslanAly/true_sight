@@ -1,48 +1,53 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:true_sight/core/constants/colors.dart';
 import 'package:true_sight/core/constants/image_strings.dart';
 import 'package:true_sight/core/constants/sizes.dart';
 import 'package:true_sight/core/constants/text_strings.dart';
 import 'package:true_sight/core/validators/validators.dart';
-import 'package:true_sight/features/auth/presentation/cubit/login/login_form_cubit.dart';
-import 'package:true_sight/features/auth/presentation/cubit/login/login_form_state.dart';
 import 'package:true_sight/widgets/form_divider.dart';
 import 'package:true_sight/widgets/password_field.dart';
 import 'package:true_sight/widgets/social_button.dart';
 
-class XLoginForm extends StatelessWidget {
-  const XLoginForm({
+class SignupForm extends StatelessWidget {
+  const SignupForm({
     super.key,
     required this.onLogin,
-    required this.onForgotPassword,
     required this.onSignup,
     required this.onGoogleLogin,
     required this.formKey,
+    required this.nameController,
     required this.emailController,
     required this.passwordController,
   });
+
   final VoidCallback onLogin;
-  final VoidCallback onForgotPassword;
   final VoidCallback onSignup;
   final VoidCallback onGoogleLogin;
   final GlobalKey<FormState> formKey;
+  final TextEditingController nameController;
   final TextEditingController emailController;
   final TextEditingController passwordController;
-
   @override
   Widget build(BuildContext context) {
-    Future.microtask(
-      () => context.read<LoginFormCubit>().loadSavedCredentials(),
-    );
+    // In SignupForm:
 
     return Form(
       key: formKey,
       autovalidateMode: AutovalidateMode.onUnfocus,
       child: Column(
         children: [
+          /// Name Field
+          TextFormField(
+            controller: nameController,
+            validator: EValidators.validateName,
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.person_outline, color: XColors.secondary),
+              labelText: XTextStrings.authName,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: XSizes.spaceBtwInputFields),
+
           /// Email Field
           TextFormField(
             controller: emailController,
@@ -59,40 +64,14 @@ class XLoginForm extends StatelessWidget {
 
           /// Password Field
           EPasswordField(controller: passwordController),
-          const SizedBox(height: XSizes.spaceBtwInputFields / 2),
+          const SizedBox(height: XSizes.spaceBtwSections),
 
-          /// Remember Me and Forgot Password
-          BlocBuilder<LoginFormCubit, LoginFormState>(
-            builder: (context, state) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: state.rememberMe,
-                        onChanged: (value) =>
-                            context.read<LoginFormCubit>().toggleRememberMe(),
-                      ),
-                      Text(XTextStrings.authRememberMe),
-                    ],
-                  ),
-                  TextButton(
-                    onPressed: onForgotPassword,
-                    child: Text(XTextStrings.authForgotPasswordButton),
-                  ),
-                ],
-              );
-            },
-          ),
-          SizedBox(height: 30.h),
-
-          /// Login Button
+          /// Signup Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: onLogin,
-              child: Text(XTextStrings.authLoginButton),
+              onPressed: onSignup,
+              child: Text(XTextStrings.authSignupButtonText),
             ),
           ),
           const SizedBox(height: XSizes.spaceBtwItems),
@@ -107,22 +86,22 @@ class XLoginForm extends StatelessWidget {
             buttonText: 'Continue with Google',
             onPressed: onGoogleLogin,
           ),
-
-          /// Don't have an account?
           const SizedBox(height: XSizes.spaceBtwItems),
+
+          /// Already have an account?
           GestureDetector(
-            onTap: onSignup,
+            onTap: onLogin,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  XTextStrings.authDontHaveAccount,
+                  XTextStrings.authAlreadyHaveAccount,
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  XTextStrings.authSignupButtonText,
+                  XTextStrings.authLoginButton,
                   style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                     fontWeight: FontWeight.w600,
                     color: XColors.secondary,

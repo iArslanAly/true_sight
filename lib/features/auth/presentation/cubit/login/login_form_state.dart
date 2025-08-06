@@ -1,17 +1,14 @@
-class AuthFormState {
+class LoginFormState {
   final bool isPasswordVisible;
   final bool rememberMe;
 
-  const AuthFormState({
+  const LoginFormState({
     required this.isPasswordVisible,
     required this.rememberMe,
   });
 
-  AuthFormState copyWith({
-    bool? isPasswordVisible,
-    bool? rememberMe,
-  }) {
-    return AuthFormState(
+  LoginFormState copyWith({bool? isPasswordVisible, bool? rememberMe}) {
+    return LoginFormState(
       isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
       rememberMe: rememberMe ?? this.rememberMe,
     );

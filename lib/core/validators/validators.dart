@@ -68,4 +68,14 @@ class EValidators {
 
     return null;
   }
+
+  static String? validateConfirmPassword(String? confirm, String original) {
+    if (confirm == null || confirm.isEmpty) {
+      return 'Please confirm your password.';
+    }
+    if (confirm != original) {
+      return 'Passwords do not match.';
+    }
+    return null;
+  }
 }

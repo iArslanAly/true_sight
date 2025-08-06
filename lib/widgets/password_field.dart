@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:true_sight/core/constants/colors.dart';
 import 'package:true_sight/core/constants/text_strings.dart';
 import 'package:true_sight/core/validators/validators.dart';
-import 'package:true_sight/features/auth/presentation/blocs/authCubit/auth_cubit.dart';
-import 'package:true_sight/features/auth/presentation/blocs/authCubit/auth_form_state.dart';
+import 'package:true_sight/features/auth/presentation/cubit/login/login_form_cubit.dart';
+import 'package:true_sight/features/auth/presentation/cubit/login/login_form_state.dart';
 
 class EPasswordField extends StatelessWidget {
   final TextEditingController controller;
@@ -13,7 +13,7 @@ class EPasswordField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthFormCubit, AuthFormState>(
+    return BlocBuilder<LoginFormCubit, LoginFormState>(
       builder: (context, state) {
         return TextFormField(
           controller: controller,
@@ -29,7 +29,7 @@ class EPasswordField extends StatelessWidget {
                 color: XColors.secondary,
               ),
               onPressed: () =>
-                  context.read<AuthFormCubit>().togglePasswordVisibility(),
+                  context.read<LoginFormCubit>().togglePasswordVisibility(),
             ),
             labelText: XTextStrings.authPassword,
             border: const OutlineInputBorder(),

@@ -1,0 +1,184 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:true_sight/core/constants/sizes.dart';
+import 'package:true_sight/core/constants/text_strings.dart';
+import 'package:true_sight/features/auth/presentation/cubit/resend_cooldown_cubit.dart';
+import 'package:true_sight/widgets/otp_field.dart';
+
+class OtpVerificationScreen extends StatelessWidget {
+  OtpVerificationScreen({super.key});
+
+  final _formKey = GlobalKey<FormState>();
+
+  void _verifyOtp(BuildContext context) {
+    final otp = _digitControllers.map((c) => c.text).join();
+
+    // ❌ Bad: otp.contains('') is always true
+    if (otp.length < 4 || otp.contains('')) return;
+
+    // ✅ Better: only proceed if all 4 boxes are non-empty
+    if (_digitControllers.any((c) => c.text.isEmpty)) {
+      // Optionally show an error toast/snackbar here
+      return;
+    }
+
+    // At this point each controller has exactly one digit
+    context.go('/update-password');
+  }
+
+  final _digitControllers = List.generate(4, (_) => TextEditingController());
+  final _focusNodes = List.generate(4, (_) => FocusNode());
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    // ─── Top Title ───
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: XSizes.d16,
+                        vertical: XSizes.d24,
+                      ),
+                      child: Text(
+                        'TrueSight',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineLarge!
+                            .copyWith(
+                              fontFamily: 'Formula',
+                              fontSize: XSizes.d50,
+                            ),
+                      ),
+                    ),
+
+                    // ─── Centered OTP Form ───
+                    Expanded(
+                      child: Align(
+                        alignment: const Alignment(0, -0.2),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: XSizes.d32,
+                          ),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Verify Otp',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineLarge,
+                                ),
+                                Text(
+                                  'Enter the 4-digit code sent to your email',
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: XSizes.spaceBtwSections),
+
+                                // OTP text fields
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: List.generate(4, (i) {
+                                    return OtpInputField(
+                                      controller: _digitControllers[i],
+                                      currentFocus: _focusNodes[i],
+                                      nextFocus: i < 3
+                                          ? _focusNodes[i + 1]
+                                          : null,
+                                      previousFocus: i > 0
+                                          ? _focusNodes[i - 1]
+                                          : null,
+                                    );
+                                  }),
+                                ),
+
+                                const SizedBox(height: XSizes.spaceBtwSections),
+                                BlocBuilder<ResendCooldownCubit, int>(
+                                  builder: (context, state) {
+                                    return state > 0
+                                        ? Text(
+                                            'Resend in 00:${state.toString().padLeft(2, '0')}',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium,
+                                          )
+                                        : TextButton(
+                                            onPressed: () {
+                                              context
+                                                  .read<ResendCooldownCubit>()
+                                                  .startCooldown();
+                                            },
+                                            child: const Text('Resend Code'),
+                                          );
+                                  },
+                                ),
+                                const SizedBox(height: XSizes.spaceBtwItems),
+
+                                // Verify Button
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () => _verifyOtp(context),
+                                    child: const Text('Verify'),
+                                  ),
+                                ),
+                                const SizedBox(height: XSizes.spaceBtwItems),
+                                GestureDetector(
+                                  onTap: () => context.go('/login'),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        XTextStrings.authRememberPassword,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge!
+                                            .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                      Text(
+                                        XTextStrings.authLoginButtonText,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge!
+                                            .copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // ─── Bottom Spacer ───
+                    const SizedBox(height: XSizes.d50),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

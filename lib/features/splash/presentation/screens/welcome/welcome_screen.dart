@@ -67,6 +67,10 @@ class WelcomeScreen extends StatelessWidget {
                       Text(
                         'Not sure if a video is real? We can help. Scan, detect, and verify in seconds. TrueSight brings truth into focus.',
                         textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: XSizes.fontSizeMd,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
@@ -77,29 +81,20 @@ class WelcomeScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(
-                    height: 55.h,
-                    child: ElevatedButton(
-                      onPressed: () => context.go('/login'),
-                      child: Text('Login'),
-                    ),
+                  ElevatedButton(
+                    onPressed: () => context.go('/login'),
+                    child: Text('Login'),
                   ),
                   SizedBox(height: 10.h),
-                  SizedBox(
-                    height: 55.h,
-                    child: OutlinedButton(
-                      onPressed: () => context.go('/signup'),
-                      child: Text('Signup'),
-                    ),
+                  OutlinedButton(
+                    onPressed: () => context.go('/signup'),
+                    child: Text('Signup'),
                   ),
                   SizedBox(height: 10.h),
-                  SizedBox(
-                    height: 55.h,
-                    child: SocialButton(
-                      imagePath: XImages.google,
-                      buttonText: 'Continue with Google',
-                      onPressed: () {},
-                    ),
+                  SocialButton(
+                    imagePath: XImages.google,
+                    buttonText: 'Continue with Google',
+                    onPressed: () {},
                   ),
                   SizedBox(height: 30.h),
                 ],

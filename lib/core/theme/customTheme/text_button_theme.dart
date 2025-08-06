@@ -8,11 +8,11 @@ class ETextButtonTheme {
   /// Light theme
   static final lightTextButtonTheme = TextButtonThemeData(
     style: TextButton.styleFrom(
-      foregroundColor: XColors.primary,
+      foregroundColor: XColors.secondary,
       textStyle: const TextStyle(
         fontSize: XSizes.fontSizeMd,
         fontWeight: FontWeight.w600,
-        color: XColors.black,
+        color: XColors.secondary,
       ),
       padding: const EdgeInsets.symmetric(
         vertical: XSizes.d16,
