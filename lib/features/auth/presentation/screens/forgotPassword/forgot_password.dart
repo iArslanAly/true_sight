@@ -1,3 +1,4 @@
+import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,8 +6,11 @@ import 'package:true_sight/core/constants/colors.dart';
 import 'package:true_sight/core/constants/sizes.dart';
 import 'package:true_sight/core/constants/text_strings.dart';
 import 'package:true_sight/core/logging/logger.dart';
+import 'package:true_sight/core/utils/send_otp_service.dart';
 import 'package:true_sight/core/validators/validators.dart';
 import 'package:true_sight/features/auth/presentation/cubit/resend_cooldown_cubit.dart';
+
+import '../../cubit/otp_cubit.dart';
 
 class ForgetPasswordScreen extends StatefulWidget {
   const ForgetPasswordScreen({super.key});
@@ -19,9 +23,14 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
 
-  void _submitResetRequest(BuildContext context) {
+  void _submitResetRequest(BuildContext context) async {
     if (_formKey.currentState?.validate() ?? false) {
       final email = _emailController.text.trim();
+      final emailOtp = EmailOTP();
+      final cubit = context.read<OtpCubit>();
+      await cubit.emailOtp.sendOtpTo(email);
+      XLoggerHelper.debug("OTP sent successfully!");
+
       XLoggerHelper.debug('Reset password for Email: $email');
       context.read<ResendCooldownCubit>().startCooldown();
 

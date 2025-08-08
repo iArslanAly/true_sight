@@ -1,3 +1,4 @@
+import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:true_sight/core/constants/sizes.dart';
 import 'package:true_sight/core/constants/text_strings.dart';
 import 'package:true_sight/core/logging/logger.dart';
+import 'package:true_sight/core/utils/send_otp_service.dart';
 import 'package:true_sight/features/auth/presentation/cubit/otp_cubit.dart';
 import 'package:true_sight/features/auth/presentation/cubit/resend_cooldown_cubit.dart';
 import 'package:true_sight/widgets/otp_field.dart';
@@ -12,19 +14,28 @@ import 'package:true_sight/widgets/otp_field.dart';
 class OtpVerificationScreen extends StatelessWidget {
   const OtpVerificationScreen({super.key});
 
-  void _verifyOtp(BuildContext context) {
+  Future<void> _verifyOtp(BuildContext context) async {
     XLoggerHelper.debug("OTP Verify clicked");
 
     final cubit = context.read<OtpCubit>();
+    final otp = cubit.otp;
 
     if (!cubit.isOtpValid) {
-      XLoggerHelper.debug("Invalid OTP");
+      XLoggerHelper.debug("Invalid OTP format");
       return;
     }
 
-    XLoggerHelper.debug("Navigating to update-password");
-    context.go('/update-password');
-    cubit.resetOtpFields();
+    XLoggerHelper.debug("OTP entered: $otp");
+    final isVerified = await cubit.emailOtp.verify(otp); // ✅ Same instance
+
+    if (!isVerified) {
+      XLoggerHelper.debug("Incorrect OTP");
+      return;
+    }
+
+    XLoggerHelper.debug("OTP verified ✅ Navigating to update-password");
+    // context.go('/update-password');
+    // cubit.resetOtpFields();
   }
 
   @override

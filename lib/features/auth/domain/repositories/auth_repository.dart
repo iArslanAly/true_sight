@@ -17,13 +17,12 @@ abstract class AuthRepository {
   Future<Either<Failure, UserEntity>> signInWithGoogle();
 
   Future<Either<Failure, UserEntity?>> getLoggedInUser();
+  Future<Either<Failure, bool>> isEmailVerified();
+  Future<Either<Failure, void>> resendVerificationEmail();
 
   Future<Either<Failure, bool>> sendOtp({required String email});
 
-  Future<Either<Failure, bool>> verifyOtp({
-    required String email,
-    required String otp,
-  });
+  Future<Either<Failure, bool>> verifyOtp({required String otp});
 
   Future<Either<Failure, bool>> updatePassword({
     required String email,
