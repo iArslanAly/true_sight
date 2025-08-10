@@ -4,6 +4,9 @@ import 'package:true_sight/core/error/failure.dart';
 class FirebaseAuthExceptionHandler {
   static Failure handle(FirebaseAuthException exception) {
     switch (exception.code) {
+      case 'invalid-credential':
+  return const InvalidCredentialFailure();
+
       case 'invalid-email':
         return const InvalidEmailFailure();
       case 'user-not-found':

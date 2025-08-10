@@ -67,6 +67,8 @@ dependencies:
   another_flushbar: ^1.12.30
   http: ^1.4.0
   email_otp: ^3.0.2
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
 
 dev_dependencies:
   flutter_test:

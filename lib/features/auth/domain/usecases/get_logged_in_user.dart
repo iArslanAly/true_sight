@@ -1,6 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:true_sight/core/error/failure.dart';
-import 'package:true_sight/core/utils/usecases.dart' show UseCase, NoParams;
+import 'package:true_sight/core/utils/status/usecases.dart' show UseCase, NoParams;
 import 'package:true_sight/features/auth/domain/repositories/auth_repository.dart';
 
 import '../entities/user_entity.dart';

@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:true_sight/core/constants/colors.dart';
 import 'package:true_sight/core/constants/image_strings.dart';
-import 'package:true_sight/core/utils/api_status.dart';
+import 'package:true_sight/core/utils/status/api_status.dart';
 import 'package:true_sight/features/splash/presentation/bloc/splash_bloc.dart';
 
 class SplashScreen extends StatelessWidget {

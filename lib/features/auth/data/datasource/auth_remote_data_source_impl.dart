@@ -14,9 +14,16 @@ import 'package:true_sight/features/auth/data/datasource/auth_remote_data_source
 import 'package:true_sight/features/auth/data/models/user_modal.dart';
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  final FirebaseAuth _firebaseAuth;
+  final FirebaseFirestore _firestore;
+  final GoogleSignIn _googleSignIn;
+  AuthRemoteDataSourceImpl({
+    required FirebaseAuth firebaseAuth,
+    required FirebaseFirestore firestore,
+    required GoogleSignIn googleSignIn,
+  }) : _firebaseAuth = firebaseAuth,
+       _firestore = firestore,
+       _googleSignIn = googleSignIn;
 
   UserModel _mapUserModel(User user, String provider) {
     return UserModel(
@@ -51,8 +58,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw const UserNotFoundFailure();
       } else {
         await user.reload();
+
         final refreshedUser = _firebaseAuth.currentUser!;
+        XLoggerHelper.debug('User verified? ${refreshedUser.emailVerified}');
         if (!refreshedUser.emailVerified) {
+          XLoggerHelper.debug('User email not verified - throwing error');
           throw const EmailNotVerifiedFailure();
         }
         await _createUserDoc(user, 'email');
@@ -101,9 +111,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await user.sendEmailVerification();
 
       // Create user document in Firestore
-      await _createUserDoc(user, 'email');
+      await _createUserDoc(updatedUser!, 'email');
 
-      return _mapUserModel(updatedUser ?? user, 'email');
+      return _mapUserModel(updatedUser, 'email');
     } on FirebaseAuthException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Signup failed');
       throw FirebaseAuthExceptionHandler.handle(e);
@@ -136,6 +146,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel?> signInWithGoogle() async {
     try {
+      await _googleSignIn.initialize();
       final account = await _googleSignIn.authenticate();
       final auth = account.authentication;
       final userCredential = GoogleAuthProvider.credential(

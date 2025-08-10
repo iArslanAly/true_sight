@@ -14,13 +14,13 @@ class SignupFormCubit extends Cubit<SignupFormState> {
   void togglePasswordVisibility() {
     emit(state.copyWith(isPasswordVisible: !state.isPasswordVisible));
   }
-@override
-  Future<void> close() {
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    confirmPasswordController.dispose();
-    return super.close();
 
+  @override
+  Future<void> close() {
+    nameController.clear();
+    emailController.clear();
+    passwordController.clear();
+    confirmPasswordController.clear();
+    return super.close();
   }
 }

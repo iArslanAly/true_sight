@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:true_sight/core/constants/sizes.dart';
 import 'package:true_sight/core/constants/text_strings.dart';
 import 'package:true_sight/core/logging/logger.dart';
-import 'package:true_sight/core/utils/send_otp_service.dart';
 import 'package:true_sight/features/auth/presentation/cubit/otp_cubit.dart';
 import 'package:true_sight/features/auth/presentation/cubit/resend_cooldown_cubit.dart';
 import 'package:true_sight/widgets/otp_field.dart';
@@ -25,12 +24,12 @@ class OtpVerificationScreen extends StatelessWidget {
     }
 
     XLoggerHelper.debug("OTP entered: $otp");
-    final isVerified = await cubit.emailOtp.verify(otp); // ✅ Same instance
+    //final isVerified = await cubit.emailOtp.verify(otp); // ✅ Same instance
 
-    if (!isVerified) {
-      XLoggerHelper.debug("Incorrect OTP");
-      return;
-    }
+    // if (!isVerified) {
+    //   XLoggerHelper.debug("Incorrect OTP");
+    //   return;
+    // }
 
     XLoggerHelper.debug("OTP verified ✅ Navigating to update-password");
     // context.go('/update-password');

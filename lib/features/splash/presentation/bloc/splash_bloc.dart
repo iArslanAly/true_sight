@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:true_sight/core/utils/api_status.dart';
+import 'package:true_sight/core/utils/status/api_status.dart';
 
 part 'splash_event.dart';
 part 'splash_state.dart';

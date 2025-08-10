@@ -1,10 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:true_sight/app/app.dart';
 import 'package:true_sight/app/providers.dart';
+import 'package:true_sight/service_locator.dart';
 
-void main() {
-  runApp(AppProviders.buildBlocs(const App()));
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Ensure that the app is ready to run before proceeding
-
+  await Firebase.initializeApp();
+  await init(); // register all dependencies
+  runApp(AppProviders.buildBlocs(const App()));
 }

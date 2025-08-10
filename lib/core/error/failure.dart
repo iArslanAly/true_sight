@@ -23,6 +23,13 @@ class InvalidEmailFailure extends Failure {
   const InvalidEmailFailure() : super("The email address is not valid.");
 }
 
+class InvalidCredentialFailure extends Failure {
+  const InvalidCredentialFailure()
+    : super(
+        "The Provided Credentials are invalid. Please check your email and password and try again.",
+      );
+}
+
 class UserNotFoundFailure extends Failure {
   const UserNotFoundFailure() : super("No user found with this email.");
 }
