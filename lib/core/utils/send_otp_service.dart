@@ -19,7 +19,7 @@ extension EmailOtpSenderExtension on EmailOTP {
   }
 
   Future<bool> verify(String otp) async {
-    final isValid = await EmailOTP.verifyOTP(otp: otp);
+    final isValid = EmailOTP.verifyOTP(otp: otp);
     if (isValid) {
       XLoggerHelper.debug("✅ OTP verified successfully!");
     } else {

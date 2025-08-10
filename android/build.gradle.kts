@@ -1,3 +1,20 @@
+// 🔧 Global build configuration
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // ✅ Firebase Crashlytics Gradle Plugin
+        classpath("com.google.firebase:firebase-crashlytics-gradle:2.9.9")
+
+        // ✅ Google Services (required for Firebase Auth, Messaging, etc.)
+        classpath("com.google.gms:google-services:4.4.1")
+
+        
+    }
+}
+
 allprojects {
     repositories {
         google()

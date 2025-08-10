@@ -1,4 +1,4 @@
-import 'package:email_otp/email_otp.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +26,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   void _submitResetRequest(BuildContext context) async {
     if (_formKey.currentState?.validate() ?? false) {
       final email = _emailController.text.trim();
-      final emailOtp = EmailOTP();
       final cubit = context.read<OtpCubit>();
       await cubit.emailOtp.sendOtpTo(email);
       XLoggerHelper.debug("OTP sent successfully!");

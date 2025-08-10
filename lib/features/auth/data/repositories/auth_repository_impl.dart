@@ -3,7 +3,7 @@ import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
 import 'package:true_sight/features/auth/domain/repositories/auth_repository.dart';
 
-import '../datasource/auth_remote_data_source.dart';
+import 'package:true_sight/features/auth/data/datasource/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;

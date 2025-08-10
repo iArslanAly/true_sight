@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("com.google.gms.google-services")       // Firebase Core & Auth
+    id("com.google.firebase.crashlytics")      // Firebase Crashlytics
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -42,3 +44,4 @@ android {
 flutter {
     source = "../.."
 }
+

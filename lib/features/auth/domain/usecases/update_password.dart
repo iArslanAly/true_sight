@@ -1,16 +1,25 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:true_sight/core/error/failure.dart';
+import 'package:true_sight/core/utils/usecases.dart';
 import 'package:true_sight/features/auth/domain/repositories/auth_repository.dart';
 
-abstract class UpdatePassword {
+class UpdatePassword extends UseCase<void, UpdatePasswordParams> {
   final AuthRepository repository;
 
   UpdatePassword(this.repository);
 
-  Future<Either<Failure, void>> call({
-    required String email,
-    required String newPassword,
-  }) {
-    return repository.updatePassword(email: email, newPassword: newPassword);
+  @override
+  Future<Either<Failure, void>> call(UpdatePasswordParams params) {
+    return repository.updatePassword(
+      email: params.email,
+      newPassword: params.newPassword,
+    );
   }
+}
+
+class UpdatePasswordParams {
+  final String email;
+  final String newPassword;
+
+  UpdatePasswordParams({required this.email, required this.newPassword});
 }
