@@ -21,14 +21,21 @@ class AuthSuccess extends AuthStatus {
 }
 
 class AuthFailure extends AuthStatus {
+  final bool isEmailNotVerified;
   final dynamic errorCode;
   final String errorMessage;
   @override
   final bool showSettings;
 
   const AuthFailure(
-    this.errorCode,
     this.errorMessage, {
     this.showSettings = false,
+    this.isEmailNotVerified = false,
+    this.errorCode,
   });
+}
+
+class AuthResendEmailSuccess extends AuthStatus {
+  final String message;
+  const AuthResendEmailSuccess(this.message);
 }

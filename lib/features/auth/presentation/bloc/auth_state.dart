@@ -7,10 +7,10 @@ class AuthState extends Equatable {
     this.user,
   });
 
-  final AuthStatus
-  status; // e.g., AuthInitial, AuthLoading, Authenticated, AuthError
+  final AuthStatus status;
   final String email;
   final UserEntity? user;
+  
 
   @override
   List<Object?> get props => [status, email, user];

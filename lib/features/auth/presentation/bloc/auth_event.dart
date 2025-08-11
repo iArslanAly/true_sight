@@ -40,9 +40,9 @@ class AuthCheckStatusEvent extends AuthEvent {
 
 /// 5. AuthResendVerifyEmailEvent
 class AuthResendVerifyEmailEvent extends AuthEvent {
-  final String email;
+  ///final String email;
 
-  const AuthResendVerifyEmailEvent({required this.email});
+  const AuthResendVerifyEmailEvent();
 }
 
 /// 6. AuthCheckEmailVerified
@@ -75,4 +75,5 @@ class AuthUpdatePasswordEvent extends AuthEvent {
 
 /// 10. AuthGoogleLoginEvent
 class AuthGoogleLoginEvent extends AuthEvent {}
-class AuthResetEvent extends AuthEvent {} 
+
+class AuthResetEvent extends AuthEvent {}

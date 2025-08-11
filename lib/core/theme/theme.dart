@@ -36,6 +36,7 @@ class TAppTheme {
     bottomSheetTheme: EBottomSheetTheme.lightBottomSheetTheme,
     elevatedButtonTheme: EElevatedButtonTheme.lightElevatedButtonTheme,
     outlinedButtonTheme: EOutlinedButtonTheme.lightOutlinedButtonTheme,
+    textButtonTheme: ETextButtonTheme.lightTextButtonTheme,
     inputDecorationTheme: ETextFormFieldTheme.lightInputDecorationTheme,
     navigationBarTheme: ENavigationBarTheme.lightNavigationBarTheme,
   );

@@ -1,14 +1,18 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/core/logging/logger.dart';
 import 'package:true_sight/core/utils/status/auth_status.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
+import 'package:true_sight/features/auth/domain/usecases/resend_verification_email.dart';
+import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_login.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_logout.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_signup.dart';
+import 'package:true_sight/features/auth/domain/usecases/verify_otp.dart';
 
-import '../../../../core/utils/status/usecases.dart';
+import '../../../../core/utils/usecase/usecases.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -18,21 +22,33 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignupUser _signupUser;
   final SignInWithGoogle _signInWithGoogle;
   final UserLogout _userLogout;
+  final ResendVerificationEmail _resendVerificationEmail;
+  final SendOtp _sendOtp;
+  final VerifyOtp _verifyOtp;
   AuthBloc({
     required LoginUser loginUser,
     required SignupUser signupUser,
     required SignInWithGoogle signInWithGoogle,
     required UserLogout userLogout,
+    required ResendVerificationEmail resendVerificationEmail,
+    required SendOtp sendOtp,
+    required VerifyOtp verifyOtp,
   }) : _loginUser = loginUser,
        _signupUser = signupUser,
        _signInWithGoogle = signInWithGoogle,
        _userLogout = userLogout,
+       _resendVerificationEmail = resendVerificationEmail,
+       _verifyOtp = verifyOtp,
+       _sendOtp = sendOtp,
        super(const AuthState()) {
     on<AuthLoginEvent>(_onAuthLoginEvent);
     on<AuthSignupEvent>(_onAuthSignupEvent);
     on<AuthGoogleLoginEvent>(_onGoogleLoginEvent);
     on<AuthLogoutEvent>(_onAuthLogoutEvent);
     on<AuthResetEvent>(_onAuthResetEvent);
+    on<AuthResendVerifyEmailEvent>(_onResendVerifyEmail);
+    on<AuthSendOtpEvent>(_onSendOtpEvent);
+    on<AuthVerifyOtpEvent>(_onVerifyOtpEvent);
   }
   Future<void> _onAuthLoginEvent(
     AuthLoginEvent event,
@@ -43,12 +59,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       LoginUserParams(email: event.email, password: event.password),
     );
     user.fold(
-      (failure) {
-        emit(
-          state.copyWith(status: AuthFailure(failure.message, failure.message)),
-        );
+      (failure) async {
+        if (failure is EmailNotVerifiedFailure) {
+          emit(
+            state.copyWith(
+              status: AuthFailure(failure.message, isEmailNotVerified: true),
+            ),
+          );
+        } else {
+          emit(state.copyWith(status: AuthFailure(failure.message)));
+        }
       },
-      (userEntity) {
+      (userEntity) async {
         emit(
           state.copyWith(
             status: AuthSuccess(data: userEntity),
@@ -74,9 +96,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     user.fold(
       (failure) {
-        emit(
-          state.copyWith(status: AuthFailure(failure.message, failure.message)),
-        );
+        emit(state.copyWith(status: AuthFailure(failure.message)));
       },
       (userEntity) {
         emit(
@@ -102,9 +122,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     user.fold(
       (failure) {
-        emit(
-          state.copyWith(status: AuthFailure(failure.message, failure.message)),
-        );
+        emit(state.copyWith(status: AuthFailure(failure.message)));
       },
       (userEntity) {
         emit(
@@ -126,9 +144,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final user = await _userLogout.call(NoParams());
     user.fold(
       (failure) {
-        emit(
-          state.copyWith(status: AuthFailure(failure.message, failure.message)),
-        );
+        emit(state.copyWith(status: AuthFailure(failure.message)));
       },
       (_) {
         emit(
@@ -136,6 +152,68 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             status: const AuthSuccess(message: 'Logged out successfully'),
             email: '',
             user: null,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onResendVerifyEmail(
+    AuthResendVerifyEmailEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthLoading()));
+    final result = await _resendVerificationEmail.call(NoParams());
+    result.fold(
+      (failure) {
+        emit(state.copyWith(status: AuthFailure(failure.message)));
+      },
+      (_) {
+        emit(
+          state.copyWith(
+            status: const AuthResendEmailSuccess(
+              'Verification email resent successfully',
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onSendOtpEvent(
+    AuthSendOtpEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthLoading()));
+    final result = await _sendOtp.call(SendOtpParams(email: event.email));
+    result.fold(
+      (failure) {
+        emit(state.copyWith(status: AuthFailure(failure.message)));
+      },
+      (_) {
+        emit(
+          state.copyWith(
+            status: const AuthSuccess(message: 'OTP sent successfully'),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onVerifyOtpEvent(
+    AuthVerifyOtpEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthLoading()));
+    final result = await _verifyOtp.call(otp: event.otp);
+    result.fold(
+      (failure) {
+        emit(state.copyWith(status: AuthFailure(failure.message)));
+      },
+      (_) {
+        emit(
+          state.copyWith(
+            status: const AuthSuccess(message: 'OTP verified successfully'),
           ),
         );
       },

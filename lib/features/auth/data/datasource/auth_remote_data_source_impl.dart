@@ -17,6 +17,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
   final FirebaseFirestore _firestore;
   final GoogleSignIn _googleSignIn;
+
   AuthRemoteDataSourceImpl({
     required FirebaseAuth firebaseAuth,
     required FirebaseFirestore firestore,
@@ -63,7 +64,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         XLoggerHelper.debug('User verified? ${refreshedUser.emailVerified}');
         if (!refreshedUser.emailVerified) {
           XLoggerHelper.debug('User email not verified - throwing error');
-          throw const EmailNotVerifiedFailure();
+          throw EmailNotVerifiedFailure();
         }
         await _createUserDoc(user, 'email');
         return _mapUserModel(user, 'email');
@@ -84,6 +85,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'Unknown signing error',
       );
+      if (e is EmailNotVerifiedFailure || e is UserNotFoundFailure) {
+        rethrow; // propagate them upwards
+      }
       throw const UnknownAuthFailure();
     }
   }
@@ -274,7 +278,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       } else if (user.emailVerified) {
         throw UserAlreadyVerified;
       }
-      user.sendEmailVerification();
+      await user.sendEmailVerification();
+      await _firebaseAuth.signOut();
     } on FirebaseAuthException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,

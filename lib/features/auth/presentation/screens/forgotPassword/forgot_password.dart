@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,8 +6,8 @@ import 'package:true_sight/core/constants/sizes.dart';
 import 'package:true_sight/core/constants/text_strings.dart';
 import 'package:true_sight/core/logging/logger.dart';
 import 'package:true_sight/core/validators/validators.dart';
+import 'package:true_sight/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:true_sight/features/auth/presentation/cubit/resend_cooldown_cubit.dart';
-
 
 class ForgetPasswordScreen extends StatefulWidget {
   const ForgetPasswordScreen({super.key});
@@ -24,17 +23,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   void _submitResetRequest(BuildContext context) async {
     if (_formKey.currentState?.validate() ?? false) {
       final email = _emailController.text.trim();
-      //final cubit = context.read<OtpCubit>();
-     // await cubit.emailOtp.sendOtpTo(email);
-      XLoggerHelper.debug("OTP sent successfully!");
 
-      XLoggerHelper.debug('Reset password for Email: $email');
       context.read<ResendCooldownCubit>().startCooldown();
-
-      // Here you would typically dispatch an event to your bloc or call a use-case
-      // context.read<AuthBloc>().add(ResetPasswordRequested(email));
-
-      // Navigate to a confirmation screen or show a success message
+      context.read<AuthBloc>().add(AuthSendOtpEvent(email: email));
+      XLoggerHelper.debug('Reset password request for email: $email');
       context.go('/otp');
     }
   }

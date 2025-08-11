@@ -10,7 +10,6 @@ class ETextButtonTheme {
     style: TextButton.styleFrom(
       foregroundColor: XColors.secondary,
       textStyle: const TextStyle(
-        fontSize: XSizes.fontSizeMd,
         fontWeight: FontWeight.w600,
         color: XColors.secondary,
       ),

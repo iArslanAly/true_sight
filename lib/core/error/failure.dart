@@ -111,3 +111,17 @@ class InvalidOtpFailure extends Failure {
 class OtpTimeoutFailure extends Failure {
   OtpTimeoutFailure() : super('OTP Timeout Failure');
 }
+
+class UserNotFoundException implements Exception {
+  final String message;
+  UserNotFoundException([this.message = 'User not found']);
+  @override
+  String toString() => 'UserNotFoundException: $message';
+}
+
+class EmailNotVerifiedException implements Exception {
+  final String message;
+  EmailNotVerifiedException([this.message = 'Email not verified']);
+  @override
+  String toString() => 'EmailNotVerifiedException: $message';
+}

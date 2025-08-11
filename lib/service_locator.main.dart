@@ -9,6 +9,9 @@ Future<void> init() async {
       signupUser: sl(),
       signInWithGoogle: sl(),
       userLogout: sl(),
+      resendVerificationEmail: sl(),
+      sendOtp: sl(),
+      verifyOtp: sl(),
     ),
   );
 
@@ -17,6 +20,10 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SignupUser(sl()));
   sl.registerLazySingleton(() => SignInWithGoogle(sl()));
   sl.registerLazySingleton(() => UserLogout(sl()));
+  sl.registerLazySingleton(() => ResendVerificationEmail(sl()));
+  sl.registerLazySingleton(() => SendOtp(sl()));
+  sl.registerLazySingleton(() => VerifyOtp(sl()));
+  
 
   /// Repositories
   sl.registerLazySingleton<AuthRepository>(

@@ -65,14 +65,43 @@ class LoginScreen extends StatelessWidget {
           }
           if (state.status is AuthFailure) {
             final failure = state.status as AuthFailure;
-            FlushbarHelper.showError(context, message: failure.errorMessage);
+            if (failure.isEmailNotVerified) {
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: Text('Email Not Verified'),
+                  content: Text(failure.errorMessage),
+                  actions: [
+                    TextButton(
+                      child: Text('Resend Email'),
+                      onPressed: () {
+                        context.read<AuthBloc>().add(
+                          AuthResendVerifyEmailEvent(),
+                        );
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: Text('OK'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              FlushbarHelper.showError(context, message: failure.errorMessage);
+            }
+          } else if (state.status is AuthResendEmailSuccess) {
+            final success = state.status as AuthResendEmailSuccess;
+            FlushbarHelper.showSuccess(context, message: success.message);
           } else if (state.status is AuthSuccess) {
-            FlushbarHelper.showSuccess(
-              context,
-              title: 'Login successful!',
-              message: 'Welcome back, ${state.user?.name ?? 'User'}!',
+            context.go(
+              '/upload',
+              extra: {
+                'title': 'Login Successful!',
+                'message': 'Welcome back, ${state.user?.name ?? 'User'}!',
+              },
             );
-            context.go('/home');
           }
         },
         builder: (context, state) {

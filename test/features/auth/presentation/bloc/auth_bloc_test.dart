@@ -4,12 +4,16 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/core/utils/status/auth_status.dart';
-import 'package:true_sight/core/utils/status/usecases.dart';
+import 'package:true_sight/core/utils/usecase/usecases.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
+import 'package:true_sight/features/auth/domain/usecases/is_email_verified.dart';
+import 'package:true_sight/features/auth/domain/usecases/resend_verification_email.dart';
+import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_login.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_logout.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_signup.dart';
+import 'package:true_sight/features/auth/domain/usecases/verify_otp.dart';
 import 'package:true_sight/features/auth/presentation/bloc/auth_bloc.dart';
 
 // ===== Mock classes =====
@@ -20,6 +24,15 @@ class MockSignupUser extends Mock implements SignupUser {}
 class MockSignInWithGoogle extends Mock implements SignInWithGoogle {}
 
 class MockUserLogout extends Mock implements UserLogout {}
+
+class MockIsEmailVerified extends Mock implements IsEmailVerified {}
+
+class MockSendOtp extends Mock implements SendOtp {}
+
+class MockResendVerificationEmail extends Mock
+    implements ResendVerificationEmail {}
+
+class MockVerifyOtp extends Mock implements VerifyOtp {}
 
 // ===== Fake parameter classes for mocktail fallback values =====
 class FakeLoginUserParams extends Fake implements LoginUserParams {}
@@ -33,7 +46,10 @@ void main() {
   late MockSignupUser mockSignupUser;
   late MockSignInWithGoogle mockSignInWithGoogle;
   late MockUserLogout mockUserLogout;
+  late MockResendVerificationEmail mockResendVerificationEmail;
+  late MockSendOtp mockSendOtp;
   late AuthBloc authBloc;
+  late MockVerifyOtp mockVerifyOtp;
 
   const testUser = UserEntity(
     uid: '123',
@@ -54,12 +70,18 @@ void main() {
     mockSignupUser = MockSignupUser();
     mockSignInWithGoogle = MockSignInWithGoogle();
     mockUserLogout = MockUserLogout();
+    mockResendVerificationEmail = MockResendVerificationEmail();
+    mockSendOtp = MockSendOtp();
+    mockVerifyOtp = MockVerifyOtp();
 
     authBloc = AuthBloc(
       loginUser: mockLoginUser,
       signupUser: mockSignupUser,
       signInWithGoogle: mockSignInWithGoogle,
       userLogout: mockUserLogout,
+      resendVerificationEmail: mockResendVerificationEmail,
+      sendOtp: mockSendOtp,
+      verifyOtp: mockVerifyOtp,
     );
   });
 
