@@ -10,6 +10,7 @@ import 'package:true_sight/features/auth/domain/usecases/is_email_verified.dart'
 import 'package:true_sight/features/auth/domain/usecases/resend_verification_email.dart';
 import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
+import 'package:true_sight/features/auth/domain/usecases/update_password.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_login.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_logout.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_signup.dart';
@@ -34,6 +35,8 @@ class MockResendVerificationEmail extends Mock
 
 class MockVerifyOtp extends Mock implements VerifyOtp {}
 
+class MockUpdatePassword extends Mock implements UpdatePassword {}
+
 // ===== Fake parameter classes for mocktail fallback values =====
 class FakeLoginUserParams extends Fake implements LoginUserParams {}
 
@@ -50,6 +53,7 @@ void main() {
   late MockSendOtp mockSendOtp;
   late AuthBloc authBloc;
   late MockVerifyOtp mockVerifyOtp;
+  late MockUpdatePassword mockUpdatePassword;
 
   const testUser = UserEntity(
     uid: '123',
@@ -73,6 +77,7 @@ void main() {
     mockResendVerificationEmail = MockResendVerificationEmail();
     mockSendOtp = MockSendOtp();
     mockVerifyOtp = MockVerifyOtp();
+    mockUpdatePassword = MockUpdatePassword();
 
     authBloc = AuthBloc(
       loginUser: mockLoginUser,
@@ -82,6 +87,7 @@ void main() {
       resendVerificationEmail: mockResendVerificationEmail,
       sendOtp: mockSendOtp,
       verifyOtp: mockVerifyOtp,
+      updatePassword: mockUpdatePassword,
     );
   });
 

@@ -16,8 +16,15 @@ class AuthLoading extends AuthStatus {}
 class AuthSuccess extends AuthStatus {
   final dynamic data;
   final String message;
+  final bool otpSent;
+  final bool otpVerified;
 
-  const AuthSuccess({this.data, this.message = ''});
+  const AuthSuccess({
+    this.data,
+    this.message = '',
+    this.otpSent = false,
+    this.otpVerified = false,
+  });
 }
 
 class AuthFailure extends AuthStatus {

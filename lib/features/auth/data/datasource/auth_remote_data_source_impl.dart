@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_otp/email_otp.dart';
@@ -9,7 +10,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/core/error/firebase_auth_exception_handler.dart';
+import 'package:true_sight/core/formaters/formaters.dart';
 import 'package:true_sight/core/logging/logger.dart';
+import 'package:true_sight/core/services/otp_config_service.dart';
 import 'package:true_sight/features/auth/data/datasource/auth_remote_data_source.dart';
 import 'package:true_sight/features/auth/data/models/user_modal.dart';
 
@@ -192,39 +195,68 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> updatePassword(String email, String newPassword) async {
     try {
-      final String baseUrl = 'http://localhost:3000/reset-password';
+      // 1️⃣ Get Firebase ID Token
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw const UnknownAuthFailure();
+
+      const String baseUrl = 'https://firebase-reset-backend-giiv.onrender.com';
+
       final response = await http.post(
         Uri.parse('$baseUrl/reset-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'newPassword': newPassword}),
       );
 
-      if (response.statusCode != 200) {
-        final body = jsonDecode(response.body);
-        throw Exception(body['message'] ?? 'Password update failed');
+      if (response.statusCode == 200) return;
+
+      final body = jsonDecode(response.body);
+      final message = body['message'] ?? 'Password update failed';
+
+      if (response.statusCode == 400) {
+        throw UpdatePasswordFailure(message);
+      } else if (response.statusCode == 404) {
+        throw UpdatePasswordFailure('Email not found.');
+      } else if (response.statusCode >= 500) {
+        throw ServerFailure(message: 'Server error: $message');
+      } else {
+        throw UpdatePasswordFailure(message);
       }
+    } on SocketException {
+      throw const ServerUnreachableFailure();
+    } on FormatException {
+      throw ServerFailure(message: 'Invalid server response.');
     } catch (e, s) {
-      // Optionally log to Crashlytics
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
         reason: 'Password reset API failed',
       );
-      rethrow;
+      if (e is UpdatePasswordFailure || e is ServerFailure) {
+        rethrow; // propagate them upwards
+      }
+      throw const UnknownAuthFailure();
     }
   }
 
   @override
   Future<void> sendOtp(String email) async {
     try {
-      XLoggerHelper.debug("Sending OTP to $email");
+      XLoggerHelper.debug("[AuthRemoteDataSourceImpl] : Sending OTP to $email");
+
+      // Replace placeholders in template
+      final templateWithTime = OTPConfigService.otpTemplate
+          .replaceAll('{{year}}', currentYear())
+          .replaceAll('{{dateTime}}', formattedDateTime());
+
+      // Apply the updated template before sending
+      EmailOTP.setTemplate(template: templateWithTime);
 
       final isSent = await EmailOTP.sendOTP(email: email);
       if (!isSent) {
         throw OtpSendFailure();
       }
 
-      XLoggerHelper.debug("✅ OTP sent to $email");
+      XLoggerHelper.debug("[AuthRemoteDataSourceImpl] : ✅ OTP sent to $email");
     } on TimeoutException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -240,6 +272,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'Unexpected OTP send error',
       );
+
       throw const UnknownAuthFailure();
     }
   }
@@ -247,7 +280,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> verifyOtp(String otp) async {
     try {
-      XLoggerHelper.debug("Verifying OTP: $otp");
+      XLoggerHelper.debug("[AuthRemoteDataSourceImpl] : Verifying OTP: $otp");
 
       // Static call — returns bool
       final isValid = EmailOTP.verifyOTP(otp: otp);
@@ -255,7 +288,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw InvalidOtpFailure();
       }
 
-      XLoggerHelper.debug("✅ OTP verified successfully!");
+      XLoggerHelper.debug(
+        "[AuthRemoteDataSourceImpl] : ✅ OTP verified successfully! $isValid",
+      );
     } on InvalidOtpFailure {
       rethrow;
     } catch (e, s) {

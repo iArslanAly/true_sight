@@ -14,6 +14,11 @@ class UnknownFailure extends Failure {
     : super("An unknown error occurred. Please try again.");
 }
 
+class ServerUnreachableFailure extends Failure {
+  const ServerUnreachableFailure()
+    : super('Cannot reach the server. Check if it’s running.');
+}
+
 class ServerFailure extends Failure {
   ServerFailure({required String message}) : super(message);
 }
@@ -124,4 +129,8 @@ class EmailNotVerifiedException implements Exception {
   EmailNotVerifiedException([this.message = 'Email not verified']);
   @override
   String toString() => 'EmailNotVerifiedException: $message';
+}
+
+class UpdatePasswordFailure extends Failure {
+  const UpdatePasswordFailure(super.message);
 }

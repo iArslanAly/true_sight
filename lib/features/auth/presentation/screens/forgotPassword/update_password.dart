@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:true_sight/core/constants/colors.dart';
 import 'package:true_sight/core/constants/sizes.dart';
+import 'package:true_sight/core/utils/status/auth_status.dart';
 import 'package:true_sight/core/validators/validators.dart';
+import 'package:true_sight/features/auth/presentation/bloc/auth_bloc.dart';
 
 class UpdatePasswordScreen extends StatefulWidget {
   const UpdatePasswordScreen({super.key});
@@ -18,8 +21,11 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      // TODO: dispatch your update-password event/use-case here
-      context.go('/login'); // for example, back to login screen
+      final newPassword = _newPassController.text.trim();
+      final email = GoRouterState.of(context).extra as String;
+      context.read<AuthBloc>().add(
+        AuthUpdatePasswordEvent(email: email, newPassword: newPassword),
+      );
     }
   }
 
@@ -32,121 +38,158 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  // ───────────────── Top Title ─────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: XSizes.d16,
-                      vertical: XSizes.d24,
-                    ),
-                    child: Text(
-                      'TrueSight',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineLarge!
-                          .copyWith(
-                            fontFamily: 'Formula',
-                            fontSize: XSizes.d50,
-                          ),
-                    ),
-                  ),
+    return BlocConsumer<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state.status is AuthLoading) {
+          // Show loading dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
+        } else {
+          // Hide loading dialog
+          Navigator.of(context, rootNavigator: true).pop();
+        }
 
-                  // ───────────────── Center Form ─────────────────
-                  Expanded(
-                    child: Align(
-                      alignment: const Alignment(0, -0.2),
-                      child: Padding(
+        if (state.status is AuthFailure) {
+          final failure = state.status as AuthFailure;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(failure.errorMessage)));
+        }
+
+        if (state.status is AuthSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Password updated successfully')),
+          );
+          context.go('/login'); // Redirect to login or home
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(),
+          body: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      // ───────────────── Top Title ─────────────────
+                      Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: XSizes.d16,
+                          vertical: XSizes.d24,
                         ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Update Password',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineMedium,
+                        child: Text(
+                          'TrueSight',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineLarge!
+                              .copyWith(
+                                fontFamily: 'Formula',
+                                fontSize: XSizes.d50,
                               ),
-                              Text(
-                                'Enter your new password below',
-                                textAlign: TextAlign.start,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: XSizes.spaceBtwSections),
+                        ),
+                      ),
 
-                              // New Password
-                              TextFormField(
-                                controller: _newPassController,
-                                validator: EValidators.validatePassword,
-                                keyboardType: TextInputType.visiblePassword,
-                                decoration: InputDecoration(
-                                  labelText: 'New Password',
-                                  prefixIcon: const Icon(
-                                    Icons.lock_outline,
-                                    color: XColors.secondary,
+                      // ───────────────── Center Form ─────────────────
+                      Expanded(
+                        child: Align(
+                          alignment: const Alignment(0, -0.2),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: XSizes.d16,
+                            ),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Update Password',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineMedium,
+                                  ),
+                                  Text(
+                                    'Enter your new password below',
+                                    textAlign: TextAlign.start,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(
+                                    height: XSizes.spaceBtwSections,
                                   ),
 
-                                  border: const OutlineInputBorder(),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: XSizes.spaceBtwInputFields,
-                              ),
+                                  // New Password
+                                  TextFormField(
+                                    controller: _newPassController,
+                                    validator: EValidators.validatePassword,
+                                    keyboardType: TextInputType.visiblePassword,
+                                    decoration: InputDecoration(
+                                      labelText: 'New Password',
+                                      prefixIcon: const Icon(
+                                        Icons.lock_outline,
+                                        color: XColors.secondary,
+                                      ),
 
-                              // Confirm Password
-                              TextFormField(
-                                controller: _confirmPassController,
-                                keyboardType: TextInputType.visiblePassword,
-                                validator: (val) =>
-                                    EValidators.validateConfirmPassword(
-                                      val,
-                                      _newPassController.text,
+                                      border: const OutlineInputBorder(),
                                     ),
-                                decoration: InputDecoration(
-                                  labelText: 'Confirm Password',
-                                  prefixIcon: const Icon(
-                                    Icons.lock_outline,
-                                    color: XColors.secondary,
+                                  ),
+                                  const SizedBox(
+                                    height: XSizes.spaceBtwInputFields,
                                   ),
 
-                                  border: const OutlineInputBorder(),
-                                ),
-                              ),
-                              const SizedBox(height: XSizes.spaceBtwSections),
+                                  // Confirm Password
+                                  TextFormField(
+                                    controller: _confirmPassController,
+                                    keyboardType: TextInputType.visiblePassword,
+                                    validator: (val) =>
+                                        EValidators.validateConfirmPassword(
+                                          val,
+                                          _newPassController.text,
+                                        ),
+                                    decoration: InputDecoration(
+                                      labelText: 'Confirm Password',
+                                      prefixIcon: const Icon(
+                                        Icons.lock_outline,
+                                        color: XColors.secondary,
+                                      ),
 
-                              // Submit Button
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: _submit,
-                                  child: const Text('Save New Password'),
-                                ),
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: XSizes.spaceBtwSections,
+                                  ),
+
+                                  // Submit Button
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: _submit,
+                                      child: const Text('Save New Password'),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
 
-                  // ───────────────── Bottom Spacer ─────────────────
-                  const SizedBox(height: XSizes.d50),
-                ],
+                      // ───────────────── Bottom Spacer ─────────────────
+                      const SizedBox(height: XSizes.d50),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

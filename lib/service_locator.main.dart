@@ -12,6 +12,7 @@ Future<void> init() async {
       resendVerificationEmail: sl(),
       sendOtp: sl(),
       verifyOtp: sl(),
+      updatePassword: sl(),
     ),
   );
 
@@ -23,7 +24,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ResendVerificationEmail(sl()));
   sl.registerLazySingleton(() => SendOtp(sl()));
   sl.registerLazySingleton(() => VerifyOtp(sl()));
-  
+  sl.registerLazySingleton(() => UpdatePassword(sl()));
 
   /// Repositories
   sl.registerLazySingleton<AuthRepository>(

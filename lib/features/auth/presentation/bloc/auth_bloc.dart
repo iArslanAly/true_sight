@@ -1,12 +1,12 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:true_sight/core/error/failure.dart';
-import 'package:true_sight/core/logging/logger.dart';
 import 'package:true_sight/core/utils/status/auth_status.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
 import 'package:true_sight/features/auth/domain/usecases/resend_verification_email.dart';
 import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
+import 'package:true_sight/features/auth/domain/usecases/update_password.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_login.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_logout.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_signup.dart';
@@ -25,6 +25,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ResendVerificationEmail _resendVerificationEmail;
   final SendOtp _sendOtp;
   final VerifyOtp _verifyOtp;
+  final UpdatePassword _updatePassword;
   AuthBloc({
     required LoginUser loginUser,
     required SignupUser signupUser,
@@ -33,6 +34,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required ResendVerificationEmail resendVerificationEmail,
     required SendOtp sendOtp,
     required VerifyOtp verifyOtp,
+    required UpdatePassword updatePassword,
   }) : _loginUser = loginUser,
        _signupUser = signupUser,
        _signInWithGoogle = signInWithGoogle,
@@ -40,6 +42,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
        _resendVerificationEmail = resendVerificationEmail,
        _verifyOtp = verifyOtp,
        _sendOtp = sendOtp,
+       _updatePassword = updatePassword,
        super(const AuthState()) {
     on<AuthLoginEvent>(_onAuthLoginEvent);
     on<AuthSignupEvent>(_onAuthSignupEvent);
@@ -49,6 +52,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthResendVerifyEmailEvent>(_onResendVerifyEmail);
     on<AuthSendOtpEvent>(_onSendOtpEvent);
     on<AuthVerifyOtpEvent>(_onVerifyOtpEvent);
+    on<AuthUpdatePasswordEvent>(_onAuthUpdatePasswordEvent);
   }
   Future<void> _onAuthLoginEvent(
     AuthLoginEvent event,
@@ -114,12 +118,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthGoogleLoginEvent event,
     Emitter<AuthState> emit,
   ) async {
-    XLoggerHelper.debug('Attempting Google login...');
     emit(state.copyWith(status: AuthLoading()));
     final user = await _signInWithGoogle.call(NoParams());
-    XLoggerHelper.debug(
-      'Google login result: ${user.isLeft() ? 'Failure' : 'Success'}',
-    );
     user.fold(
       (failure) {
         emit(state.copyWith(status: AuthFailure(failure.message)));
@@ -193,7 +193,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (_) {
         emit(
           state.copyWith(
-            status: const AuthSuccess(message: 'OTP sent successfully'),
+            status: const AuthSuccess(
+              message: 'OTP sent successfully',
+              otpSent: true,
+            ),
           ),
         );
       },
@@ -213,7 +216,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (_) {
         emit(
           state.copyWith(
-            status: const AuthSuccess(message: 'OTP verified successfully'),
+            status: const AuthSuccess(
+              message: 'OTP verified successfully',
+              otpVerified: true,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onAuthUpdatePasswordEvent(
+    AuthUpdatePasswordEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthLoading()));
+    final result = await _updatePassword.call(
+      UpdatePasswordParams(email: event.email, newPassword: event.newPassword),
+    );
+    result.fold(
+      (failure) {
+        emit(state.copyWith(status: AuthFailure(failure.message)));
+      },
+      (_) {
+        emit(
+          state.copyWith(
+            status: const AuthSuccess(message: 'Password updated successfully'),
           ),
         );
       },

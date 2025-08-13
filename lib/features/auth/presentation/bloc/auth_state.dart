@@ -10,7 +10,6 @@ class AuthState extends Equatable {
   final AuthStatus status;
   final String email;
   final UserEntity? user;
-  
 
   @override
   List<Object?> get props => [status, email, user];
