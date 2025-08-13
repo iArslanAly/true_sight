@@ -6,6 +6,7 @@ import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/core/utils/status/auth_status.dart';
 import 'package:true_sight/core/utils/usecase/usecases.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
+import 'package:true_sight/features/auth/domain/usecases/get_logged_in_user.dart';
 import 'package:true_sight/features/auth/domain/usecases/is_email_verified.dart';
 import 'package:true_sight/features/auth/domain/usecases/resend_verification_email.dart';
 import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
@@ -29,6 +30,8 @@ class MockUserLogout extends Mock implements UserLogout {}
 class MockIsEmailVerified extends Mock implements IsEmailVerified {}
 
 class MockSendOtp extends Mock implements SendOtp {}
+
+class MockGetLoggedInUser extends Mock implements GetLoggedInUser {}
 
 class MockResendVerificationEmail extends Mock
     implements ResendVerificationEmail {}
@@ -54,6 +57,7 @@ void main() {
   late AuthBloc authBloc;
   late MockVerifyOtp mockVerifyOtp;
   late MockUpdatePassword mockUpdatePassword;
+  late MockGetLoggedInUser mockGetLoggedInUser;
 
   const testUser = UserEntity(
     uid: '123',
@@ -78,6 +82,7 @@ void main() {
     mockSendOtp = MockSendOtp();
     mockVerifyOtp = MockVerifyOtp();
     mockUpdatePassword = MockUpdatePassword();
+    mockGetLoggedInUser = MockGetLoggedInUser();
 
     authBloc = AuthBloc(
       loginUser: mockLoginUser,
@@ -88,6 +93,7 @@ void main() {
       sendOtp: mockSendOtp,
       verifyOtp: mockVerifyOtp,
       updatePassword: mockUpdatePassword,
+      getLoggedInUser: mockGetLoggedInUser,
     );
   });
 

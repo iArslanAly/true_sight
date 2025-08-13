@@ -20,11 +20,24 @@ class UploadScreen extends StatelessWidget {
     }
     return Scaffold(
       appBar: AppBar(title: const Text('Upload Screen'), centerTitle: true),
-      body: Center(
-        child: Text(
-          'Upload your files here',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () {
+                context.go('/profile');
+              },
+              child: const Text('Go to Profile'),
+            ),
+          ),
+          Center(
+            child: Text(
+              'Upload your files here',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+        ],
       ),
     );
   }

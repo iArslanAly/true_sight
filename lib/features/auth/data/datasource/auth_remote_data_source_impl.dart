@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:email_otp/email_otp.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -20,14 +21,17 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
   final FirebaseFirestore _firestore;
   final GoogleSignIn _googleSignIn;
+  final Connectivity _connectivity;
 
   AuthRemoteDataSourceImpl({
     required FirebaseAuth firebaseAuth,
     required FirebaseFirestore firestore,
     required GoogleSignIn googleSignIn,
+    required Connectivity connectivity,
   }) : _firebaseAuth = firebaseAuth,
        _firestore = firestore,
-       _googleSignIn = googleSignIn;
+       _googleSignIn = googleSignIn,
+       _connectivity = connectivity;
 
   UserModel _mapUserModel(User user, String provider) {
     return UserModel(
@@ -199,7 +203,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw const UnknownAuthFailure();
 
-      const String baseUrl = 'https://firebase-reset-backend-giiv.onrender.com';
+      const String baseUrl = 'http://localhost:300';
 
       final response = await http.post(
         Uri.parse('$baseUrl/reset-password'),
@@ -231,7 +235,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'Password reset API failed',
       );
-      if (e is UpdatePasswordFailure || e is ServerFailure) {
+      if (e is UpdatePasswordFailure ||
+          e is ServerFailure ||
+          e is ServerUnreachableFailure ||
+          e is TimeoutException) {
         rethrow; // propagate them upwards
       }
       throw const UnknownAuthFailure();
@@ -291,14 +298,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       XLoggerHelper.debug(
         "[AuthRemoteDataSourceImpl] : ✅ OTP verified successfully! $isValid",
       );
-    } on InvalidOtpFailure {
-      rethrow;
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
         reason: 'Unexpected OTP verify error',
       );
+      if (e is InvalidOtpFailure) {
+        rethrow; // propagate InvalidOtpFailure upwards
+      }
       throw const UnknownAuthFailure();
     }
   }
@@ -364,10 +372,25 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel?> getCurrentUser() async {
     try {
+      final List<ConnectivityResult> netStatus = await _connectivity
+          .checkConnectivity();
+      final isOnline =
+          netStatus.contains(ConnectivityResult.mobile) ||
+          netStatus.contains(ConnectivityResult.wifi);
+      if (!isOnline) {
+        throw const NetworkFailure();
+      }
+
       final user = _firebaseAuth.currentUser;
       if (user == null) {
         throw const UserNotFoundFailure();
       }
+      await user.reload();
+      if (!user.emailVerified) {
+        await logout();
+        throw const EmailNotVerifiedFailure();
+      }
+
       return _mapUserModel(user, 'email');
     } on FirebaseAuthException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
@@ -382,6 +405,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'Unknown get current user error',
       );
+      if (e is UserNotFoundFailure ||
+          e is EmailNotVerifiedFailure ||
+          e is NetworkFailure) {
+        rethrow;
+      }
       throw const UnknownAuthFailure();
     }
   }

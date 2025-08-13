@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:true_sight/core/constants/colors.dart';
 import 'package:true_sight/core/constants/image_strings.dart';
 import 'package:true_sight/core/constants/sizes.dart';
-import 'package:true_sight/widgets/social_button.dart';
+import 'package:true_sight/features/auth/presentation/widgets/social_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

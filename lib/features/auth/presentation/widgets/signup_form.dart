@@ -4,9 +4,9 @@ import 'package:true_sight/core/constants/image_strings.dart';
 import 'package:true_sight/core/constants/sizes.dart';
 import 'package:true_sight/core/constants/text_strings.dart';
 import 'package:true_sight/core/validators/validators.dart';
-import 'package:true_sight/widgets/form_divider.dart';
-import 'package:true_sight/widgets/password_field.dart';
-import 'package:true_sight/widgets/social_button.dart';
+import 'package:true_sight/features/auth/presentation/widgets/form_divider.dart';
+import 'package:true_sight/features/auth/presentation/widgets/password_field.dart';
+import 'package:true_sight/features/auth/presentation/widgets/social_button.dart';
 
 class SignupForm extends StatelessWidget {
   const SignupForm({

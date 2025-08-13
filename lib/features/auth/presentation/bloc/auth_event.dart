@@ -34,8 +34,8 @@ class AuthLogoutEvent extends AuthEvent {
 }
 
 /// 4. AuthReloadUserEvent
-class AuthCheckStatusEvent extends AuthEvent {
-  const AuthCheckStatusEvent();
+class AuthGetLoggedInUserEvent extends AuthEvent {
+  const AuthGetLoggedInUserEvent();
 }
 
 /// 5. AuthResendVerifyEmailEvent

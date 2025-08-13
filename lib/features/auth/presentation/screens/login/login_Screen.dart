@@ -12,7 +12,7 @@ import 'package:true_sight/core/widgets/flashbar_helper.dart';
 import 'package:true_sight/core/widgets/loading_dialogue.dart';
 import 'package:true_sight/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:true_sight/features/auth/presentation/cubit/login/login_form_cubit.dart';
-import 'package:true_sight/widgets/login_form.dart';
+import 'package:true_sight/features/auth/presentation/widgets/login_form.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});

@@ -9,9 +9,9 @@ import 'package:true_sight/core/constants/text_strings.dart';
 import 'package:true_sight/core/validators/validators.dart';
 import 'package:true_sight/features/auth/presentation/cubit/login/login_form_cubit.dart';
 import 'package:true_sight/features/auth/presentation/cubit/login/login_form_state.dart';
-import 'package:true_sight/widgets/form_divider.dart';
-import 'package:true_sight/widgets/password_field.dart';
-import 'package:true_sight/widgets/social_button.dart';
+import 'package:true_sight/features/auth/presentation/widgets/form_divider.dart';
+import 'package:true_sight/features/auth/presentation/widgets/password_field.dart';
+import 'package:true_sight/features/auth/presentation/widgets/social_button.dart';
 
 class XLoginForm extends StatelessWidget {
   const XLoginForm({

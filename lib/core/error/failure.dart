@@ -110,7 +110,7 @@ class OtpSendFailure extends Failure {
 }
 
 class InvalidOtpFailure extends Failure {
-  InvalidOtpFailure() : super('Invalid OTP');
+  InvalidOtpFailure() : super('Invalid OTP Provided for Verification');
 }
 
 class OtpTimeoutFailure extends Failure {

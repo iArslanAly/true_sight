@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/core/utils/status/auth_status.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
+import 'package:true_sight/features/auth/domain/usecases/get_logged_in_user.dart';
 import 'package:true_sight/features/auth/domain/usecases/resend_verification_email.dart';
 import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
@@ -26,6 +27,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SendOtp _sendOtp;
   final VerifyOtp _verifyOtp;
   final UpdatePassword _updatePassword;
+  final GetLoggedInUser _getLoggedInUser;
   AuthBloc({
     required LoginUser loginUser,
     required SignupUser signupUser,
@@ -35,11 +37,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required SendOtp sendOtp,
     required VerifyOtp verifyOtp,
     required UpdatePassword updatePassword,
+    required GetLoggedInUser getLoggedInUser,
   }) : _loginUser = loginUser,
        _signupUser = signupUser,
        _signInWithGoogle = signInWithGoogle,
        _userLogout = userLogout,
        _resendVerificationEmail = resendVerificationEmail,
+       _getLoggedInUser = getLoggedInUser,
        _verifyOtp = verifyOtp,
        _sendOtp = sendOtp,
        _updatePassword = updatePassword,
@@ -53,6 +57,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSendOtpEvent>(_onSendOtpEvent);
     on<AuthVerifyOtpEvent>(_onVerifyOtpEvent);
     on<AuthUpdatePasswordEvent>(_onAuthUpdatePasswordEvent);
+    on<AuthGetLoggedInUserEvent>(_onGetLoggedinUserEvent);
   }
   Future<void> _onAuthLoginEvent(
     AuthLoginEvent event,
@@ -242,6 +247,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(
           state.copyWith(
             status: const AuthSuccess(message: 'Password updated successfully'),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onGetLoggedinUserEvent(
+    AuthGetLoggedInUserEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthLoading()));
+    final user = await _getLoggedInUser.call(NoParams());
+    user.fold(
+      (failure) {
+        emit(state.copyWith(status: AuthFailure(failure.message)));
+      },
+      (userEntity) {
+        emit(
+          state.copyWith(
+            status: AuthSuccess(data: userEntity),
+            user: userEntity,
           ),
         );
       },

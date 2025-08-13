@@ -13,6 +13,7 @@ Future<void> init() async {
       sendOtp: sl(),
       verifyOtp: sl(),
       updatePassword: sl(),
+      getLoggedInUser: sl(),
     ),
   );
 
@@ -25,6 +26,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SendOtp(sl()));
   sl.registerLazySingleton(() => VerifyOtp(sl()));
   sl.registerLazySingleton(() => UpdatePassword(sl()));
+  sl.registerLazySingleton(() => GetLoggedInUser(sl()));
 
   /// Repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -37,6 +39,8 @@ Future<void> init() async {
       firebaseAuth: sl(),
       firestore: sl(),
       googleSignIn: sl(),
+      connectivity: sl(),
+
     ),
   );
 
@@ -44,4 +48,5 @@ Future<void> init() async {
   sl.registerLazySingleton(() => FirebaseAuth.instance);
   sl.registerLazySingleton(() => FirebaseFirestore.instance);
   sl.registerLazySingleton(() => GoogleSignIn.instance);
+  sl.registerLazySingleton(() => Connectivity());
 }

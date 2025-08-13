@@ -11,7 +11,7 @@ import 'package:true_sight/core/widgets/loading_dialogue.dart';
 import 'package:true_sight/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:true_sight/features/auth/presentation/cubit/otp_cubit.dart';
 import 'package:true_sight/features/auth/presentation/cubit/resend_cooldown_cubit.dart';
-import 'package:true_sight/widgets/otp_field.dart';
+import 'package:true_sight/features/auth/presentation/widgets/otp_field.dart';
 
 class OtpVerificationScreen extends StatelessWidget {
   const OtpVerificationScreen({super.key});
@@ -56,12 +56,12 @@ class OtpVerificationScreen extends StatelessWidget {
           } else {
             LoadingDialog.hide(context);
           }
-          if (state is AuthFailure) {
+          if (state.status is AuthFailure) {
             final failure = state.status as AuthFailure;
-            // Show error message
+
             FlushbarHelper.showError(
               context,
-              title: 'OTP Verification Failed',
+              title: 'Error',
               message: failure.errorMessage,
             );
           } else if (state.status is AuthSuccess) {
@@ -145,12 +145,15 @@ class OtpVerificationScreen extends StatelessWidget {
                                     children: List.generate(4, (i) {
                                       return OtpInputField(
                                         controller: cubit.digitControllers[i],
-                                        currentFocus: cubit.focusNodes[i],
+                                        textFieldFocusNode: cubit.focusNodes[i],
                                         nextFocus: i < 3
                                             ? cubit.focusNodes[i + 1]
                                             : null,
                                         previousFocus: i > 0
                                             ? cubit.focusNodes[i - 1]
+                                            : null,
+                                        previousController: i > 0
+                                            ? cubit.digitControllers[i - 1]
                                             : null,
                                       );
                                     }),

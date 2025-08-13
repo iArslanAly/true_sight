@@ -8,7 +8,7 @@ import 'package:true_sight/core/widgets/flashbar_helper.dart';
 import 'package:true_sight/core/widgets/loading_dialogue.dart';
 import 'package:true_sight/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:true_sight/features/auth/presentation/cubit/signup/signup_form_cubit.dart';
-import 'package:true_sight/widgets/signup_form.dart';
+import 'package:true_sight/features/auth/presentation/widgets/signup_form.dart';
 
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});

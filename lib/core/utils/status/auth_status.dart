@@ -33,12 +33,14 @@ class AuthFailure extends AuthStatus {
   final String errorMessage;
   @override
   final bool showSettings;
+  final bool isOtpInvalid;
 
   const AuthFailure(
     this.errorMessage, {
     this.showSettings = false,
     this.isEmailNotVerified = false,
     this.errorCode,
+    this.isOtpInvalid = false,
   });
 }
 
