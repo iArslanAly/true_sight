@@ -69,6 +69,7 @@ dependencies:
   email_otp: ^3.0.2
   bloc_test: ^10.0.0
   mocktail: ^1.0.4
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_test:

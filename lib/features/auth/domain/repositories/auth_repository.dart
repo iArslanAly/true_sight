@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fpdart/fpdart.dart';
 import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
@@ -30,4 +32,5 @@ abstract class AuthRepository {
   });
 
   Future<Either<Failure, bool>> logout();
+  Future<Either<Failure, UserEntity>> updateProfileImage(File imageFile);
 }

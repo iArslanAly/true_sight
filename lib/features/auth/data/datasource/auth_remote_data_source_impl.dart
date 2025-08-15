@@ -1,16 +1,19 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:email_otp/email_otp.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/http.dart' as http;
+import 'package:true_sight/core/error/api_error_mapper.dart';
+import 'package:true_sight/core/error/api_exception.dart';
+import 'package:true_sight/core/error/auth_exceptions.dart';
 import 'package:true_sight/core/error/failure.dart';
-import 'package:true_sight/core/error/firebase_auth_exception_handler.dart';
+import 'package:true_sight/core/error/firebase_auth_exception_mapper.dart.dart';
 import 'package:true_sight/core/formaters/formaters.dart';
 import 'package:true_sight/core/logging/logger.dart';
 import 'package:true_sight/core/services/otp_config_service.dart';
@@ -22,16 +25,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseFirestore _firestore;
   final GoogleSignIn _googleSignIn;
   final Connectivity _connectivity;
+  final FirebaseStorage _firebaseStorage;
 
   AuthRemoteDataSourceImpl({
     required FirebaseAuth firebaseAuth,
     required FirebaseFirestore firestore,
     required GoogleSignIn googleSignIn,
     required Connectivity connectivity,
+    required FirebaseStorage firebaseStorage,
   }) : _firebaseAuth = firebaseAuth,
        _firestore = firestore,
        _googleSignIn = googleSignIn,
-       _connectivity = connectivity;
+       _connectivity = connectivity,
+       _firebaseStorage = firebaseStorage;
 
   UserModel _mapUserModel(User user, String provider) {
     return UserModel(
@@ -63,39 +69,44 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           .timeout(const Duration(seconds: 30));
       final user = userCredential.user;
       if (user == null) {
-        throw const UserNotFoundFailure();
-      } else {
-        await user.reload();
-
-        final refreshedUser = _firebaseAuth.currentUser!;
-        XLoggerHelper.debug('User verified? ${refreshedUser.emailVerified}');
-        if (!refreshedUser.emailVerified) {
-          XLoggerHelper.debug('User email not verified - throwing error');
-          throw EmailNotVerifiedFailure();
-        }
-        await _createUserDoc(user, 'email');
-        return _mapUserModel(user, 'email');
+        throw const UserNotFoundException();
       }
+
+      await user.reload();
+      final refreshedUser = _firebaseAuth.currentUser!;
+      if (!refreshedUser.emailVerified) {
+        throw const EmailNotVerifiedException();
+      }
+
+      await _createUserDoc(user, 'email');
+      return _mapUserModel(user, 'email');
     } on FirebaseAuthException catch (e, s) {
-      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Login failed');
-      throw FirebaseAuthExceptionHandler.handle(e);
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Login failed: ${e.code} - ${e.message}',
+        information: ['Email: $email'], // optional metadata
+      );
+      throw FirebaseAuthExceptionMapper.map(e);
     } on TimeoutException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
         reason: 'Signing timed out',
       );
-      throw const SigninTimeoutFailure();
+      throw const SigninTimeoutException();
+    } on SocketException catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Network error');
+      throw const NetworkException();
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
         reason: 'Unknown signing error',
       );
-      if (e is EmailNotVerifiedFailure || e is UserNotFoundFailure) {
-        rethrow; // propagate them upwards
-      }
-      throw const UnknownAuthFailure();
+      // if it's a known Exception rethrow; else wrap to UnknownAuthException
+      if (e is AuthException) rethrow;
+      throw UnknownAuthException(e.toString());
     }
   }
 
@@ -127,7 +138,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return _mapUserModel(updatedUser, 'email');
     } on FirebaseAuthException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Signup failed');
-      throw FirebaseAuthExceptionHandler.handle(e);
+      throw FirebaseAuthExceptionMapper.map(e);
     } on TimeoutException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -141,7 +152,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'Unknown signup error',
       );
-      throw const UnknownAuthFailure();
+      throw const UnknownAuthException();
     }
   }
 
@@ -178,7 +189,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'Google sign-in failed',
       );
-      throw FirebaseAuthExceptionHandler.handle(e);
+      throw FirebaseAuthExceptionMapper.map(e);
     } on TimeoutException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -198,59 +209,88 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> updatePassword(String email, String newPassword) async {
+    const String baseUrl = 'http://192.168.100.6:3000';
+    final dio = Dio();
+
     try {
-      // 1️⃣ Get Firebase ID Token
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw const UnknownAuthFailure();
-
-      const String baseUrl = 'http://localhost:300';
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'newPassword': newPassword}),
+      final response = await dio.post(
+        '$baseUrl/reset-password',
+        data: {'email': email, 'newPassword': newPassword},
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+          validateStatus: (_) => true,
+        ),
       );
 
-      if (response.statusCode == 200) return;
+      final status = response.statusCode ?? 0;
+      final body = response.data;
 
-      final body = jsonDecode(response.body);
-      final message = body['message'] ?? 'Password update failed';
-
-      if (response.statusCode == 400) {
-        throw UpdatePasswordFailure(message);
-      } else if (response.statusCode == 404) {
-        throw UpdatePasswordFailure('Email not found.');
-      } else if (response.statusCode >= 500) {
-        throw ServerFailure(message: 'Server error: $message');
+      String? serverMessage;
+      if (body == null) {
+        serverMessage = null;
+      } else if (body is String && body.trim().isNotEmpty) {
+        serverMessage = body;
+      } else if (body is Map) {
+        serverMessage = (body['message'] ?? body['error'] ?? body['msg'])
+            ?.toString();
       } else {
-        throw UpdatePasswordFailure(message);
+        serverMessage = body.toString();
       }
-    } on SocketException {
-      throw const ServerUnreachableFailure();
-    } on FormatException {
-      throw ServerFailure(message: 'Invalid server response.');
+
+      if (status >= 200 && status < 300) return;
+
+      if (status >= 400 && status < 500) {
+        throw UpdatePasswordFailure(
+          serverMessage ?? 'Request failed (status: $status).',
+        );
+      }
+
+      if (status >= 500) {
+        throw ServerFailure(
+          message: serverMessage ?? 'Server error (status: $status).',
+        );
+      }
+
+      // Fallback – shouldn't be hit now
+      throw UpdatePasswordFailure(
+        serverMessage ?? 'Unexpected response (status: $status).',
+      );
+    } on DioException catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'updatePassword DioException',
+        fatal: false,
+      );
+      final failure = ApiErrorMapper.map(e);
+      throw ApiException(failure);
+    } on SocketException catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'updatePassword SocketException',
+        fatal: false,
+      );
+      final failure = ApiErrorMapper.map(e);
+      throw ApiException(failure);
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
-        reason: 'Password reset API failed',
+        reason: 'updatePassword unknown error',
+        fatal: false,
       );
-      if (e is UpdatePasswordFailure ||
-          e is ServerFailure ||
-          e is ServerUnreachableFailure ||
-          e is TimeoutException) {
-        rethrow; // propagate them upwards
+      if (e is Failure) {
+        throw ApiException(e); // wrap existing failure
       }
-      throw const UnknownAuthFailure();
+      final failure = ApiErrorMapper.map(e);
+      throw ApiException(failure);
     }
   }
 
   @override
   Future<void> sendOtp(String email) async {
     try {
-      XLoggerHelper.debug("[AuthRemoteDataSourceImpl] : Sending OTP to $email");
-
-      // Replace placeholders in template
       final templateWithTime = OTPConfigService.otpTemplate
           .replaceAll('{{year}}', currentYear())
           .replaceAll('{{dateTime}}', formattedDateTime());
@@ -262,8 +302,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (!isSent) {
         throw OtpSendFailure();
       }
-
-      XLoggerHelper.debug("[AuthRemoteDataSourceImpl] : ✅ OTP sent to $email");
     } on TimeoutException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -280,24 +318,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         reason: 'Unexpected OTP send error',
       );
 
-      throw const UnknownAuthFailure();
+      throw const UnknownAuthException();
     }
   }
 
   @override
   Future<void> verifyOtp(String otp) async {
     try {
-      XLoggerHelper.debug("[AuthRemoteDataSourceImpl] : Verifying OTP: $otp");
-
       // Static call — returns bool
       final isValid = EmailOTP.verifyOTP(otp: otp);
       if (!isValid) {
         throw InvalidOtpFailure();
       }
-
-      XLoggerHelper.debug(
-        "[AuthRemoteDataSourceImpl] : ✅ OTP verified successfully! $isValid",
-      );
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -307,7 +339,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (e is InvalidOtpFailure) {
         rethrow; // propagate InvalidOtpFailure upwards
       }
-      throw const UnknownAuthFailure();
+      throw const UnknownAuthException();
     }
   }
 
@@ -317,7 +349,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final user = _firebaseAuth.currentUser;
       await user?.reload();
       if (user == null) {
-        throw UserNotFoundFailure();
+        throw UserNotFoundException();
       } else if (user.emailVerified) {
         throw UserAlreadyVerified;
       }
@@ -329,14 +361,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'failed to send Verification Email',
       );
-      throw FirebaseAuthExceptionHandler.handle(e);
+      throw FirebaseAuthExceptionMapper.map(e);
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
         reason: 'Unknown  send Verification Email error',
       );
-      throw const UnknownAuthFailure();
+      throw const UnknownAuthException();
     }
   }
 
@@ -358,14 +390,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'failed to send Verification Email',
       );
-      throw FirebaseAuthExceptionHandler.handle(e);
+      throw FirebaseAuthExceptionMapper.map(e);
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
         reason: 'Unknown  send Verification Email error',
       );
-      throw const UnknownAuthFailure();
+      throw const UnknownAuthException();
     }
   }
 
@@ -378,27 +410,27 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           netStatus.contains(ConnectivityResult.mobile) ||
           netStatus.contains(ConnectivityResult.wifi);
       if (!isOnline) {
-        throw const NetworkFailure();
+        throw const NetworkException();
       }
 
       final user = _firebaseAuth.currentUser;
       if (user == null) {
-        throw const UserNotFoundFailure();
+        throw const UserNotFoundException();
       }
       await user.reload();
       if (!user.emailVerified) {
         await logout();
-        throw const EmailNotVerifiedFailure();
+        throw const EmailNotVerifiedException();
       }
 
-      return _mapUserModel(user, 'email');
+      return _mapUserModel(user, user.providerData.first.providerId);
     } on FirebaseAuthException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
         reason: 'Get current user failed',
       );
-      throw FirebaseAuthExceptionHandler.handle(e);
+      throw FirebaseAuthExceptionMapper.map(e);
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -410,7 +442,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           e is NetworkFailure) {
         rethrow;
       }
-      throw const UnknownAuthFailure();
+      throw const UnknownAuthException();
     }
   }
 
@@ -419,7 +451,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       final user = _firebaseAuth.currentUser;
       if (user == null) {
-        throw const UserNotFoundFailure();
+        throw const UserNotFoundException();
       }
       await user.reload();
     } on FirebaseAuthException catch (e, s) {
@@ -428,14 +460,71 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         s,
         reason: 'Reload user failed',
       );
-      throw FirebaseAuthExceptionHandler.handle(e);
+      throw FirebaseAuthExceptionMapper.map(e);
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
         s,
         reason: 'Unknown reload user error',
       );
-      throw const UnknownAuthFailure();
+      throw const UnknownAuthException();
+    }
+  }
+
+  @override
+  Future<UserModel> updateProfileImage(File imageFile) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) throw const UserNotFoundException();
+
+      // 🔹 Reference to profile image in Storage
+      final ref = _firebaseStorage.ref().child(
+        'profile_images/${user.uid}.jpg',
+      );
+
+      // 🔹 Delete existing file if exists (for Google login or previous uploads)
+      try {
+        await ref.getMetadata();
+        await ref.delete();
+            } catch (_) {
+        // Ignore if no file exists
+      }
+
+      // 🔹 Upload new file
+      await ref.putFile(imageFile);
+      final downloadUrl = await ref.getDownloadURL();
+
+      XLoggerHelper.debug('Profile image updated: ${user.uid} - $downloadUrl');
+
+      // 🔹 Update Firestore for both Google and email/password users
+      await _firestore.collection('users').doc(user.uid).update({
+        'photoUrl': downloadUrl,
+      });
+
+      // 🔹 Update FirebaseAuth profile (optional, mainly for Google users)
+      await user.updatePhotoURL(downloadUrl);
+      await user.reload();
+      final updatedUser = _firebaseAuth.currentUser!;
+
+      // 🔹 Return updated user model
+      return _mapUserModel(
+        updatedUser,
+        updatedUser.providerData.first.providerId,
+      );
+    } on FirebaseAuthException catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Update profile image failed',
+      );
+      throw ApiException(ApiErrorMapper.map(e));
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Unknown update profile image error',
+      );
+      throw const UnknownAuthException();
     }
   }
 }

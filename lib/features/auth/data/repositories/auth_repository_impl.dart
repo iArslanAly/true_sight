@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:fpdart/fpdart.dart';
+import 'package:true_sight/core/error/exception_to_failure.dart';
 import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
 import 'package:true_sight/features/auth/domain/repositories/auth_repository.dart';
@@ -32,10 +34,8 @@ class AuthRepositoryImpl implements AuthRepository {
         return Left(ServerFailure(message: "User is null"));
       }
       return Right(user.toEntity());
-    } on Failure catch (failure) {
-      return Left(failure);
     } catch (e) {
-      return const Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -56,7 +56,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Failure catch (failure) {
       return Left(failure);
     } catch (e) {
-      return Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -151,6 +151,18 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(failure);
     } catch (e) {
       return Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> updateProfileImage(File imageFile) async {
+    try {
+      final userModel = await remoteDataSource.updateProfileImage(imageFile);
+      return Right(userModel.toEntity());
+    } on Failure catch (failure) {
+      return Left(failure);
+    } catch (e) {
+      return const Left(UnknownFailure());
     }
   }
 }

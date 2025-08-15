@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:true_sight/features/auth/data/models/user_modal.dart';
 
 abstract class AuthRemoteDataSource {
@@ -12,4 +14,5 @@ abstract class AuthRemoteDataSource {
   Future<void> verifyOtp(String otp);
   Future<void> updatePassword(String email, String newPassword);
   Future<void> logout();
+  Future<UserModel> updateProfileImage(File imageFile);
 }

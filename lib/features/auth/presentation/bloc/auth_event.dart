@@ -77,3 +77,8 @@ class AuthUpdatePasswordEvent extends AuthEvent {
 class AuthGoogleLoginEvent extends AuthEvent {}
 
 class AuthResetEvent extends AuthEvent {}
+
+class AuthUpdateProfileImageEvent extends AuthEvent {
+  final File imageFile;
+  const AuthUpdateProfileImageEvent(this.imageFile);
+}

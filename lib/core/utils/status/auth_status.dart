@@ -48,3 +48,5 @@ class AuthResendEmailSuccess extends AuthStatus {
   final String message;
   const AuthResendEmailSuccess(this.message);
 }
+
+class AuthLoggedOut extends AuthStatus {}

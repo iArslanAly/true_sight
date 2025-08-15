@@ -12,6 +12,7 @@ import 'package:true_sight/features/auth/domain/usecases/resend_verification_ema
 import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:true_sight/features/auth/domain/usecases/update_password.dart';
+import 'package:true_sight/features/auth/domain/usecases/update_profile_image.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_login.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_logout.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_signup.dart';
@@ -40,6 +41,8 @@ class MockVerifyOtp extends Mock implements VerifyOtp {}
 
 class MockUpdatePassword extends Mock implements UpdatePassword {}
 
+class MockUpdateProfileImage extends Mock implements UpdateProfileImage {}
+
 // ===== Fake parameter classes for mocktail fallback values =====
 class FakeLoginUserParams extends Fake implements LoginUserParams {}
 
@@ -58,6 +61,7 @@ void main() {
   late MockVerifyOtp mockVerifyOtp;
   late MockUpdatePassword mockUpdatePassword;
   late MockGetLoggedInUser mockGetLoggedInUser;
+  late MockUpdateProfileImage mockUpdateProfileImage;
 
   const testUser = UserEntity(
     uid: '123',
@@ -83,6 +87,7 @@ void main() {
     mockVerifyOtp = MockVerifyOtp();
     mockUpdatePassword = MockUpdatePassword();
     mockGetLoggedInUser = MockGetLoggedInUser();
+    mockUpdateProfileImage = MockUpdateProfileImage();
 
     authBloc = AuthBloc(
       loginUser: mockLoginUser,
@@ -94,6 +99,7 @@ void main() {
       verifyOtp: mockVerifyOtp,
       updatePassword: mockUpdatePassword,
       getLoggedInUser: mockGetLoggedInUser,
+      updateProfileImage: mockUpdateProfileImage,
     );
   });
 
