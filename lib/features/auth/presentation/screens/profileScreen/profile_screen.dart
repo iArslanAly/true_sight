@@ -25,7 +25,7 @@ class ProfileScreen extends StatelessWidget {
     } else {
       permission = type == ImageSourceType.camera
           ? Permission.camera
-          : Permission.storage;
+          : Permission.photos;
     }
 
     // Request permission
@@ -41,8 +41,8 @@ class ProfileScreen extends StatelessWidget {
     if (result is PermissionGranted) {
       final picker = ImagePickerService();
       final file = type == ImageSourceType.camera
-          ? await picker.pickFromCamera()
-          : await picker.pickFromGallery();
+          ? await picker.pickFromCamera(type: ImageType.profile)
+          : await picker.pickFromGallery(type: ImageType.profile);
 
       if (file != null) {
         context.read<AuthBloc>().add(AuthUpdateProfileImageEvent(file));
