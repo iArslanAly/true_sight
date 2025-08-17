@@ -19,7 +19,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Failure catch (failure) {
       return Left(failure);
     } catch (e) {
-      return const Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -67,8 +67,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(result);
     } on Failure catch (f) {
       return Left(f);
-    } catch (_) {
-      return const Left(UnknownAuthFailure());
+    } catch (e) {
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -79,8 +79,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Right(null); // Success
     } on Failure catch (failure) {
       return Left(failure);
-    } catch (_) {
-      return const Left(UnknownFailure());
+    } catch (e) {
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -92,7 +92,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Failure catch (failure) {
       return Left(failure);
     } catch (e) {
-      return Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -111,7 +111,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Failure catch (failure) {
       return Left(failure);
     } catch (e) {
-      return Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -126,7 +126,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Failure catch (failure) {
       return Left(failure);
     } catch (e) {
-      return Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -138,7 +138,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Failure catch (failure) {
       return Left(failure);
     } catch (e) {
-      return Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -150,7 +150,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Failure catch (failure) {
       return Left(failure);
     } catch (e) {
-      return Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
     }
   }
 
@@ -162,7 +162,31 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Failure catch (failure) {
       return Left(failure);
     } catch (e) {
-      return const Left(UnknownFailure());
+      return Left(ExceptionToFailure.map(e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> updateProfile({
+    required String name,
+    required String email,
+    File? photoUrl,
+    required String country,
+    required String gender,
+  }) async {
+    try {
+      final userModal = await remoteDataSource.updateProfile(
+        name: name,
+        email: email,
+        photoUrl: photoUrl,
+        country: country,
+        gender: gender,
+      );
+      return Right(userModal.toEntity());
+    } on Failure catch (failure) {
+      return Left(failure);
+    } catch (e) {
+      return Left(ExceptionToFailure.map(e));
     }
   }
 }

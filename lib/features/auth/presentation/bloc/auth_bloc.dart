@@ -11,6 +11,7 @@ import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:true_sight/features/auth/domain/usecases/update_password.dart';
 import 'package:true_sight/features/auth/domain/usecases/update_profile_image.dart';
+import 'package:true_sight/features/auth/domain/usecases/update_user.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_login.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_logout.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_signup.dart';
@@ -32,6 +33,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UpdatePassword _updatePassword;
   final GetLoggedInUser _getLoggedInUser;
   final UpdateProfileImage _updateProfileImage;
+  final UpdateProfile _updateProfile;
 
   AuthBloc({
     required LoginUser loginUser,
@@ -44,6 +46,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required UpdatePassword updatePassword,
     required GetLoggedInUser getLoggedInUser,
     required UpdateProfileImage updateProfileImage,
+    required UpdateProfile updateProfile,
   }) : _loginUser = loginUser,
        _signupUser = signupUser,
        _signInWithGoogle = signInWithGoogle,
@@ -54,6 +57,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
        _verifyOtp = verifyOtp,
        _sendOtp = sendOtp,
        _updatePassword = updatePassword,
+       _updateProfile = updateProfile,
        super(const AuthState()) {
     on<AuthLoginEvent>(_onAuthLoginEvent);
     on<AuthSignupEvent>(_onAuthSignupEvent);
@@ -66,6 +70,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthUpdatePasswordEvent>(_onAuthUpdatePasswordEvent);
     on<AuthGetLoggedInUserEvent>(_onGetLoggedinUserEvent);
     on<AuthUpdateProfileImageEvent>(_onUpdateProfileImageEvent);
+    on<UpdateUserEvent>(_onUpdateUserEvent);
   }
   Future<void> _onAuthLoginEvent(
     AuthLoginEvent event,
@@ -288,6 +293,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(state.copyWith(status: AuthLoading()));
     final result = await _updateProfileImage.call(event.imageFile);
+    result.fold(
+      (failure) {
+        emit(state.copyWith(status: AuthFailure(failure.message)));
+      },
+      (userEntity) {
+        emit(
+          state.copyWith(
+            status: AuthSuccess(data: userEntity),
+            user: userEntity,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onUpdateUserEvent(
+    UpdateUserEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthLoading()));
+    final result = await _updateProfile.call(
+      UpdateUserParams(
+        name: event.name,
+        email: event.email,
+        country: event.country,
+        gender: event.gender,
+        photoUrl: event.photoUrl,
+      ),
+    );
     result.fold(
       (failure) {
         emit(state.copyWith(status: AuthFailure(failure.message)));

@@ -19,6 +19,7 @@ import 'package:true_sight/core/logging/logger.dart';
 import 'package:true_sight/core/services/otp_config_service.dart';
 import 'package:true_sight/features/auth/data/datasource/auth_remote_data_source.dart';
 import 'package:true_sight/features/auth/data/models/user_modal.dart';
+import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
@@ -44,11 +45,99 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       uid: user.uid,
       email: user.email ?? '',
       name: user.displayName ?? '',
+      country: '',
+      gender: 'Not specified',
       photoUrl: user.photoURL ?? '',
       provider: provider,
       emailVerified: user.emailVerified,
       createdAt: null,
     );
+  }
+  // at top
+  /// Converts Firebase User to UserModel, fetching Firestore data if available
+  /// Fetch user model from Firestore if exists; otherwise create a doc from firebaseUser defaults.
+  /// This prefers Firestore values and falls back to firebaseUser values when absent.
+  Future<UserModel> _fetchUserModelFromFirestore({
+    required User firebaseUser,
+    required String provider,
+  }) async {
+    final uid = firebaseUser.uid;
+    final docRef = _firestore.collection('users').doc(uid);
+
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists && docSnap.data() != null) {
+      final data = Map<String, dynamic>.from(docSnap.data()!);
+
+      // Normalize & safely convert createdAt
+      DateTime? createdAt;
+      final createdAtRaw = data['createdAt'];
+      if (createdAtRaw != null) {
+        if (createdAtRaw is Timestamp) {
+          createdAt = createdAtRaw.toDate();
+        } else if (createdAtRaw is DateTime) {
+          createdAt = createdAtRaw;
+        } else {
+          createdAt = DateTime.tryParse(createdAtRaw.toString());
+        }
+      }
+
+      final mergedData = <String, dynamic>{
+        'uid': uid,
+        'email': data['email'] ?? firebaseUser.email ?? '',
+        'name': data['name'] ?? firebaseUser.displayName ?? '',
+        'emailVerified': firebaseUser.emailVerified,
+        'provider': data['provider'] ?? provider,
+        'country': (data['country'] as String?)?.trim(),
+        'gender': (data['gender'] as String?)?.trim(),
+        'photoUrl': data['photoUrl'] ?? firebaseUser.photoURL,
+        'createdAt': createdAt,
+      };
+
+      return UserModel.fromDocument(mergedData);
+    } else {
+      // Firestore doc missing — create it but use merge so nothing is lost
+      final defaultModel = UserModel.fromEntity(
+        UserEntity(
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName ?? '',
+          email: firebaseUser.email ?? '',
+          emailVerified: firebaseUser.emailVerified,
+          provider: provider,
+          photoUrl: firebaseUser.photoURL,
+          country: null,
+          gender: null,
+          createdAt: null,
+        ),
+      );
+
+      // Create doc with server timestamp for createdAt and merge to avoid overwriting existing fields
+      await docRef.set({
+        ...defaultModel.toJson(),
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // re-read so we return the authoritative Firestore-backed model
+      final createdSnap = await docRef.get();
+      final createdData = Map<String, dynamic>.from(createdSnap.data() ?? {});
+      // convert createdAt if timestamp
+      final createdRaw = createdData['createdAt'];
+      DateTime? createdAt2;
+      if (createdRaw is Timestamp) createdAt2 = createdRaw.toDate();
+
+      final mergedCreated = {
+        ...createdData,
+        'uid': uid,
+        'email': createdData['email'] ?? firebaseUser.email ?? '',
+        'name': createdData['name'] ?? firebaseUser.displayName ?? '',
+        'emailVerified': firebaseUser.emailVerified,
+        'provider': createdData['provider'] ?? provider,
+        'photoUrl': createdData['photoUrl'] ?? firebaseUser.photoURL,
+        'createdAt': createdAt2,
+      };
+
+      return UserModel.fromDocument(mergedCreated);
+    }
   }
 
   Future<void> _createUserDoc(User user, String provider) async {
@@ -422,8 +511,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         await logout();
         throw const EmailNotVerifiedException();
       }
-
-      return _mapUserModel(user, user.providerData.first.providerId);
+      return await _fetchUserModelFromFirestore(
+        firebaseUser: user,
+        provider: user.providerData.first.providerId,
+      );
     } on FirebaseAuthException catch (e, s) {
       FirebaseCrashlytics.instance.recordError(
         e,
@@ -486,7 +577,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       try {
         await ref.getMetadata();
         await ref.delete();
-            } catch (_) {
+      } catch (_) {
         // Ignore if no file exists
       }
 
@@ -523,6 +614,68 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         e,
         s,
         reason: 'Unknown update profile image error',
+      );
+      throw const UnknownAuthException();
+    }
+  }
+
+  @override
+  Future<UserModel> updateProfile({
+    required String name,
+    required String email,
+    File? photoUrl,
+    required String country,
+    required String gender,
+  }) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) throw const UserNotFoundException();
+
+      String? downloadUrl;
+
+      // 🔹 Upload new image if provided
+      if (photoUrl != null) {
+        final ref = _firebaseStorage.ref().child(
+          'profile_images/${user.uid}.jpg',
+        );
+        try {
+          await ref.getMetadata();
+          await ref.delete();
+        } catch (_) {}
+        await ref.putFile(photoUrl);
+        downloadUrl = await ref.getDownloadURL();
+
+        await user.updatePhotoURL(downloadUrl);
+      }
+
+      // 🔹 Update Firestore
+      await _firestore.collection('users').doc(user.uid).update({
+        'name': name,
+        'email': email,
+        'photoUrl': downloadUrl ?? user.photoURL,
+        'country': country,
+        'gender': gender,
+      });
+
+      await user.reload();
+      final updatedUser = _firebaseAuth.currentUser!;
+
+      return _mapUserModel(
+        updatedUser,
+        updatedUser.providerData.first.providerId,
+      );
+    } on FirebaseAuthException catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Fail to Update Profile',
+      );
+      throw ApiException(ApiErrorMapper.map(e));
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        s,
+        reason: 'Unknown update profile error',
       );
       throw const UnknownAuthException();
     }

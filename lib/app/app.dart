@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:true_sight/core/theme/theme.dart';
+import 'package:true_sight/core/cubits/theme_cubit.dart';
 import 'package:true_sight/routes/app_router.dart';
 
 class App extends StatelessWidget {
@@ -13,11 +14,15 @@ class App extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp.router(
-          theme: TAppTheme.lightTheme,
-          title: 'TrueSight',
-          routerConfig: appRouter,
-          debugShowCheckedModeBanner: false,
+        return BlocBuilder<ThemeCubit, ThemeData>(
+          builder: (context, theme) {
+            return MaterialApp.router(
+              theme: theme,
+              title: 'TrueSight',
+              routerConfig: appRouter,
+              debugShowCheckedModeBanner: false,
+            );
+          },
         );
       },
     );

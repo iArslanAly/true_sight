@@ -13,6 +13,7 @@ import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:true_sight/features/auth/domain/usecases/update_password.dart';
 import 'package:true_sight/features/auth/domain/usecases/update_profile_image.dart';
+import 'package:true_sight/features/auth/domain/usecases/update_user.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_login.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_logout.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_signup.dart';

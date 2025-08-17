@@ -82,3 +82,19 @@ class AuthUpdateProfileImageEvent extends AuthEvent {
   final File imageFile;
   const AuthUpdateProfileImageEvent(this.imageFile);
 }
+
+class UpdateUserEvent extends AuthEvent {
+  final String name;
+  final String email;
+  final File? photoUrl;
+  final String country;
+  final String gender;
+
+  const UpdateUserEvent({
+    required this.name,
+    required this.email,
+    required this.photoUrl,
+    required this.country,
+    required this.gender,
+  });
+}

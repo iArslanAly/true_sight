@@ -15,6 +15,7 @@ Future<void> init() async {
       updatePassword: sl(),
       getLoggedInUser: sl(),
       updateProfileImage: sl(),
+      updateProfile: sl(),
     ),
   );
 
@@ -29,6 +30,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => UpdatePassword(sl()));
   sl.registerLazySingleton(() => GetLoggedInUser(sl()));
   sl.registerLazySingleton(() => UpdateProfileImage(sl()));
+  sl.registerLazySingleton(() => UpdateProfile(sl()));
 
   /// Repositories
   sl.registerLazySingleton<AuthRepository>(

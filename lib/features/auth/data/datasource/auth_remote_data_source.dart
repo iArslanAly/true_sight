@@ -15,4 +15,11 @@ abstract class AuthRemoteDataSource {
   Future<void> updatePassword(String email, String newPassword);
   Future<void> logout();
   Future<UserModel> updateProfileImage(File imageFile);
+  Future<UserModel> updateProfile({
+    required String name,
+    required String email,
+    File? photoUrl,
+    required String country,
+    required String gender,
+  });
 }

@@ -33,4 +33,11 @@ abstract class AuthRepository {
 
   Future<Either<Failure, bool>> logout();
   Future<Either<Failure, UserEntity>> updateProfileImage(File imageFile);
+  Future<Either<Failure, UserEntity>> updateProfile({
+    required String name,
+    required String email,
+    File? photoUrl,
+    required String country,
+    required String gender,
+  });
 }

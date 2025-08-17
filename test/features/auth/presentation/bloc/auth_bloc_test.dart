@@ -13,6 +13,7 @@ import 'package:true_sight/features/auth/domain/usecases/send_otp.dart';
 import 'package:true_sight/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:true_sight/features/auth/domain/usecases/update_password.dart';
 import 'package:true_sight/features/auth/domain/usecases/update_profile_image.dart';
+import 'package:true_sight/features/auth/domain/usecases/update_user.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_login.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_logout.dart';
 import 'package:true_sight/features/auth/domain/usecases/user_signup.dart';
@@ -33,6 +34,8 @@ class MockIsEmailVerified extends Mock implements IsEmailVerified {}
 class MockSendOtp extends Mock implements SendOtp {}
 
 class MockGetLoggedInUser extends Mock implements GetLoggedInUser {}
+
+class MockUpdateProfile extends Mock implements UpdateProfile {}
 
 class MockResendVerificationEmail extends Mock
     implements ResendVerificationEmail {}
@@ -62,6 +65,7 @@ void main() {
   late MockUpdatePassword mockUpdatePassword;
   late MockGetLoggedInUser mockGetLoggedInUser;
   late MockUpdateProfileImage mockUpdateProfileImage;
+  late MockUpdateProfile mockUpdateProfile;
 
   const testUser = UserEntity(
     uid: '123',
@@ -88,6 +92,7 @@ void main() {
     mockUpdatePassword = MockUpdatePassword();
     mockGetLoggedInUser = MockGetLoggedInUser();
     mockUpdateProfileImage = MockUpdateProfileImage();
+    mockUpdateProfile = MockUpdateProfile();
 
     authBloc = AuthBloc(
       loginUser: mockLoginUser,
@@ -100,6 +105,7 @@ void main() {
       updatePassword: mockUpdatePassword,
       getLoggedInUser: mockGetLoggedInUser,
       updateProfileImage: mockUpdateProfileImage,
+      updateProfile: mockUpdateProfile,
     );
   });
 

@@ -3,10 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:true_sight/features/auth/presentation/screens/forgotPassword/forgot_password.dart';
 import 'package:true_sight/features/auth/presentation/screens/forgotPassword/update_password.dart';
 import 'package:true_sight/features/auth/presentation/screens/login/login_screen.dart';
+import 'package:true_sight/features/auth/presentation/screens/profileScreen/edit_profile.dart';
 import 'package:true_sight/features/auth/presentation/screens/profileScreen/profile_screen.dart';
 import 'package:true_sight/features/auth/presentation/screens/signup/signup_screen.dart';
 import 'package:true_sight/features/auth/presentation/screens/forgotPassword/otp_verification_screen.dart';
 import 'package:true_sight/features/detection/presentation/screens/result_screen.dart';
+import 'package:true_sight/features/history/presentation/screens/history_screen.dart';
 import 'package:true_sight/features/splash/splash/splash_screen.dart';
 import 'package:true_sight/features/splash/welcome/welcome_screen.dart';
 
@@ -48,9 +50,19 @@ final GoRouter appRouter = GoRouter(
       child: const ProfileScreen(),
     ),
     smoothFadeRoute(
+      path: '/edit-profile',
+      name: 'edit-profile',
+      child: const EditProfileScreen(),
+    ),
+    smoothFadeRoute(
       path: '/upload',
       name: 'upload',
       child: const UploadScreen(),
+    ),
+    smoothFadeRoute(
+      path: '/history',
+      name: 'history',
+      child: const HistoryScreen(),
     ),
     smoothFadeRoute(
       path: '/result',
