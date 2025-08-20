@@ -41,6 +41,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
        _firebaseStorage = firebaseStorage;
 
   UserModel _mapUserModel(User user, String provider) {
+    
     return UserModel(
       uid: user.uid,
       email: user.email ?? '',

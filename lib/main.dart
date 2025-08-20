@@ -11,19 +11,22 @@ import 'package:true_sight/service_locator.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  OTPConfigService.init(); // ✅ Configure OTP before app starts
+  OTPConfigService.init(); // Configure OTP before app starts
   await init(); // register all dependencies
   await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-  // Check first launch
+
+  /// Check first launch
   final isFirstLaunch = await StorageHelper.isFirstLaunch();
 
   if (isFirstLaunch) {
-    // Clear all local data and sign out Firebase
+    /// Clear all local data and sign out Firebase
     await StorageHelper.clearAll();
     await FirebaseAuth.instance.signOut();
 
-    // Mark that first launch has been handled
+    /// Mark that first launch has been handled
     await StorageHelper.markFirstLaunchDone();
+
+    /// Configure Dio clients
   }
   runApp(AppProviders.buildBlocs(const App()));
 }

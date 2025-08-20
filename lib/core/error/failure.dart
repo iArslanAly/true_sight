@@ -120,3 +120,4 @@ class OtpTimeoutFailure extends Failure {
 class UpdatePasswordFailure extends Failure {
   const UpdatePasswordFailure(super.message);
 }
+

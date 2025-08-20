@@ -228,7 +228,6 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Row(
-                    
                     children: [
                       ProfileImage(
                         photoUrl: user.photoUrl,
@@ -236,8 +235,6 @@ class ProfileScreen extends StatelessWidget {
                             _pickImage(context, ImageSourceType.camera),
                         onGalleryTap: () =>
                             _pickImage(context, ImageSourceType.gallery),
-                        primaryColor: Colors.deepPurple,
-                        iconColor: Colors.white,
                       ),
 
                       const SizedBox(width: 16),

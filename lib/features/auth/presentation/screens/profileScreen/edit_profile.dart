@@ -226,8 +226,6 @@ class EditProfileScreen extends StatelessWidget {
                                   context,
                                   ImageSourceType.gallery,
                                 ),
-                                primaryColor: Colors.deepPurple,
-                                iconColor: Colors.white,
                               )
                             else
                               CircleAvatar(

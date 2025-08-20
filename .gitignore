@@ -11,12 +11,25 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-api_key.env
+.env
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
+windows/runner/GoogleService-Info.plist
+linux/flutter/GoogleService-Info.plist
+firebase.json
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
 .idea/
 
 # The .vscode folder contains launch configuration and tasks you configure in

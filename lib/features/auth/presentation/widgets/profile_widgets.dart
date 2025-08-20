@@ -54,8 +54,8 @@ class ProfileImage extends StatelessWidget {
   final double radius;
   final VoidCallback? onCameraTap;
   final VoidCallback? onGalleryTap;
-  final Color primaryColor;
-  final Color iconColor;
+  final Color? primaryColor;
+  final Color? iconColor;
 
   const ProfileImage({
     super.key,
@@ -64,12 +64,13 @@ class ProfileImage extends StatelessWidget {
     this.radius = 55,
     this.onCameraTap,
     this.onGalleryTap,
-    this.primaryColor = Colors.blue, // Default, can override
-    this.iconColor = Colors.white, // Default, can override
+    this.primaryColor,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     ImageProvider? image;
 
     if (localImage != null) {
@@ -138,12 +139,23 @@ class ProfileImage extends StatelessWidget {
             },
             child: Container(
               decoration: BoxDecoration(
-                color: primaryColor,
+                color: isDarkMode
+                    ? Colors.grey.shade800
+                    : (primaryColor ?? Colors.black),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(
+                  color: isDarkMode
+                      ? Colors.white
+                      : (iconColor ?? Colors.white),
+                  width: 2,
+                ),
               ),
               padding: const EdgeInsets.all(8),
-              child: Icon(Icons.camera_alt, color: iconColor, size: 15),
+              child: Icon(
+                Icons.camera_alt,
+                color: iconColor ?? Colors.white,
+                size: 15,
+              ),
             ),
           ),
         ),
