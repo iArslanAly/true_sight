@@ -57,7 +57,7 @@ class UploadScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // ✅ Result button (only show when result is ready)
+                  // Result button (only show when result is ready)
                   Positioned(
                     bottom: 16,
                     right: 16,

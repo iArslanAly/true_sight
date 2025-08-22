@@ -2,7 +2,7 @@
 import 'dart:io';
 import 'package:true_sight/core/error/failure.dart';
 import 'auth_exceptions.dart';
-import 'api_exception.dart';
+import '../api_exception.dart';
 
 class ExceptionToFailure {
   static Failure map(Object e) {

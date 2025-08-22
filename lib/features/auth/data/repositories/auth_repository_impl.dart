@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:fpdart/fpdart.dart';
-import 'package:true_sight/core/error/exception_to_failure.dart';
+import 'package:true_sight/core/error/auth/exception_to_failure.dart';
 import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/features/auth/domain/entities/user_entity.dart';
 import 'package:true_sight/features/auth/domain/repositories/auth_repository.dart';

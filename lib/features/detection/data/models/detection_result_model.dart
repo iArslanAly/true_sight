@@ -1,6 +1,6 @@
-import 'package:true_sight/features/detection/domain/entities/detection_result.dart';
+import 'package:true_sight/features/detection/domain/entities/detection_result_entity.dart';
 
-class DetectionResultModel extends DetectionResult {
+class DetectionResultModel extends DetectionResultEntity {
   DetectionResultModel({
     required super.originalFileName,
     required super.requestId,
@@ -36,5 +36,18 @@ class DetectionResultModel extends DetectionResult {
       'createdAt': createdAt.toIso8601String(),
       'resultsSummary': resultsSummary,
     };
+  }
+
+  DetectionResultEntity toEntity() {
+    return DetectionResultEntity(
+      originalFileName: originalFileName,
+      requestId: requestId,
+      mediaType: mediaType,
+      thumbnail: thumbnail,
+      overallStatus: overallStatus,
+      storageLocation: storageLocation,
+      createdAt: createdAt,
+      resultsSummary: resultsSummary,
+    );
   }
 }

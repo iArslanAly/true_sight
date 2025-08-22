@@ -145,6 +145,7 @@ class EditProfileScreen extends StatelessWidget {
           builder: (context, isEditing) {
             final theme = Theme.of(context);
 
+            // ignore: deprecated_member_use
             return WillPopScope(
               onWillPop: () async {
                 if (isEditing) {

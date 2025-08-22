@@ -1,113 +1,192 @@
+// dio_client.dart
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:true_sight/core/constants/api_constants.dart';
 import 'package:true_sight/core/logging/logger.dart';
+import 'package:true_sight/core/error/media/media_exception.dart';
 
+/// Thin HTTP adapter. Responsible only for making HTTP requests and mapping
+/// network/HTTP/timeout errors into MediaException subclasses.
+/// Parsing of API response to models should happen in the RemoteDataSource.
 class DioClient {
-  // Singleton instance
   DioClient._privateConstructor();
   static final DioClient instance = DioClient._privateConstructor();
 
   final Dio _dio = Dio(
     BaseOptions(
-      connectTimeout: const Duration(minutes: 2),
-      receiveTimeout: const Duration(minutes: 5),
-      headers: {'x-api-key': dotenv.env['REALITY_DEFENDER_API'] ?? ''},
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 60),
+      // baseUrl will be set by configForRealityDefender
     ),
   );
 
+  /// Call once during app init (or when needed).
   void configForRealityDefender() {
     final apiKey = dotenv.env['REALITY_DEFENDER_API'];
     if (apiKey == null || apiKey.isEmpty) {
-      throw Exception('Missing RD api_key in .env');
+      throw Exception('Missing REALITY_DEFENDER_API in .env');
     }
 
     _dio.options.baseUrl = 'https://api.prd.realitydefender.xyz/api';
     _dio.options.headers['x-api-key'] = apiKey;
 
-    // Add logging interceptor
-    _dio.interceptors.add(
-      LogInterceptor(
-        request: true,
-        requestHeader: true,
-        requestBody: true,
-        responseHeader: false,
-        responseBody: true,
-        error: true,
-        logPrint: (obj) => XLoggerHelper.debug(obj.toString()),
-      ),
-    );
-  }
-
-  Future<ApiResponse> getSignedUrl(String fileName) async {
-    try {
-      final response = await _dio.post(
-        '/files/aws-presigned',
-        data: {'fileName': fileName},
+    if (!_dio.interceptors.any((i) => i is LogInterceptor)) {
+      _dio.interceptors.add(
+        LogInterceptor(
+          request: true,
+          requestHeader: true,
+          requestBody: true,
+          responseHeader: false,
+          responseBody: true,
+          error: true,
+          logPrint: (obj) => XLoggerHelper.debug(obj.toString()),
+        ),
       );
-      return ApiResponse.success(response.data, response.statusCode ?? 200);
-    } on DioException catch (e) {
-      return _handleError(e);
-    } catch (e) {
-      return ApiResponse.error('Unexpected error: $e', 500);
     }
   }
 
-  Future<ApiResponse> uploadToS3(
-    String signedUrl,
-    String filePath, {
-    ProgressCallback? onProgress,
-  }) async {
-    try {
-      final fileBytes = await File(filePath).readAsBytes();
-      final response = await _dio.put(
-        signedUrl,
-        data: fileBytes,
-        onSendProgress: onProgress,
-        options: Options(headers: {'Content-Type': 'application/octet-stream'}),
-      );
-      return ApiResponse.success(response.data, response.statusCode);
-    } catch (e) {
-      return _handleError(e);
-    }
-  }
-
-  Future<ApiResponse> getAnalysisResult(String requestId) async {
-    try {
-      final response = await _dio.get('/media/users/$requestId/');
-      return ApiResponse.success(response.data, response.statusCode);
-    } catch (e) {
-      return _handleError(e);
-    }
-  }
-
-  Future<ApiResponse> post(
+  /// POST expecting JSON object response.
+  /// Throws MediaException on any error.
+  Future<Map<String, dynamic>> postJson(
     String endpoint, {
     dynamic data,
     ProgressCallback? onSendProgress,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? extraHeaders,
   }) async {
     try {
       final response = await _dio.post(
         endpoint,
         data: data,
+        options: Options(headers: extraHeaders),
         onSendProgress: onSendProgress,
+        cancelToken: cancelToken,
       );
-      return ApiResponse.success(response.data, response.statusCode);
+      return _ensureMap(response.data);
+    } on DioException catch (e) {
+      throw _mapDioException(e);
     } catch (e) {
-      return _handleError(e);
+      throw UnknownMediaException(e.toString());
     }
   }
 
-  ApiResponse _handleError(dynamic error) {
-    if (error is DioException) {
-      final message =
-          error.response?.data['message'] ??
-          error.response?.statusMessage ??
-          error.message ??
-          'Unknown error';
-      return ApiResponse.error(message.toString(), error.response?.statusCode);
+  /// GET expecting JSON object response.
+  Future<Map<String, dynamic>> getJson(
+    String endpoint, {
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final response = await _dio.get(
+        endpoint,
+        queryParameters: queryParameters,
+        cancelToken: cancelToken,
+      );
+      return _ensureMap(response.data);
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    } catch (e) {
+      throw UnknownMediaException(e.toString());
     }
-    return ApiResponse.error('Unexpected error: $error', null);
+  }
+
+  /// Upload raw bytes to a presigned URL (S3). Uses a fresh Dio instance to
+  /// avoid interfering with baseUrl / interceptors.
+  Future<void> putBytesToUrl(
+    String signedUrl,
+    Uint8List bytes, {
+    ProgressCallback? onSendProgress,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? extraHeaders,
+  }) async {
+    try {
+      final dioForUpload = Dio(BaseOptions(
+        // Uploads can be slow; increase timeouts
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 120),
+      ));
+
+      final options = Options(
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          if (extraHeaders != null) ...extraHeaders,
+        },
+        responseType: ResponseType.plain,
+      );
+
+      // Use a Stream so large files don't get double-buffered
+      final stream = Stream<List<int>>.fromIterable(
+        <List<int>>[bytes],
+      );
+
+      await dioForUpload.put(
+        signedUrl,
+        data: stream,
+        options: options,
+        onSendProgress: onSendProgress,
+        cancelToken: cancelToken,
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    } catch (e) {
+      throw UnknownMediaException(e.toString());
+    }
+  }
+
+  /// Convenience: upload a File (reads bytes then calls putBytesToUrl)
+  Future<void> uploadFileToUrl(
+    String signedUrl,
+    File file, {
+    ProgressCallback? onSendProgress,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? extraHeaders,
+  }) async {
+    final bytes = await file.readAsBytes();
+    return putBytesToUrl(
+      signedUrl,
+      bytes,
+      onSendProgress: onSendProgress,
+      cancelToken: cancelToken,
+      extraHeaders: extraHeaders,
+    );
+  }
+
+  /// Ensure the response body is a JSON object and return as Map.
+  Map<String, dynamic> _ensureMap(dynamic data) {
+    if (data == null) return <String, dynamic>{};
+    if (data is Map<String, dynamic>) return data;
+    if (data is String) {
+      try {
+        final parsed = jsonDecode(data);
+        if (parsed is Map<String, dynamic>) return parsed;
+      } catch (_) {}
+    }
+    throw UnknownMediaException('Response is not a JSON object');
+  }
+
+  /// Map DioException to your MediaException hierarchy.
+  MediaException _mapDioException(DioException e) {
+    // Dio v5 types
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return TimeoutException(e.message ?? 'Request timed out');
+      case DioExceptionType.cancel:
+        return NetworkException('Request cancelled');
+      case DioExceptionType.connectionError:
+      case DioExceptionType.unknown:
+        return NetworkException(e.message ?? 'Network error');
+      case DioExceptionType.badResponse:
+        final status = e.response?.statusCode;
+        final raw = e.response?.data;
+        final msg = raw is Map ? raw['message'] ?? e.response?.statusMessage : e.response?.statusMessage;
+        return UnknownMediaException('HTTP $status: ${msg ?? e.message}');
+      default:
+        return UnknownMediaException(e.message ?? 'Unknown network error');
+    }
   }
 }

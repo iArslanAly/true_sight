@@ -1,4 +1,4 @@
-class DetectionResult {
+class DetectionResultEntity {
   final String requestId;
   final String originalFileName;
   final String mediaType;
@@ -8,7 +8,7 @@ class DetectionResult {
   final Map<String, dynamic>? resultsSummary;
   final DateTime createdAt;
 
-  DetectionResult({
+  DetectionResultEntity({
     required this.originalFileName,
     required this.requestId,
     required this.mediaType,
