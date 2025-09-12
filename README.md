@@ -1,4 +1,5 @@
 # TrueSight – AI Media Authenticity Verifier 🛡️
+<img width="1250" height="580" alt="poster_true_sight" src="https://github.com/user-attachments/assets/edf94bbb-83cc-40e0-8144-bcccf3b4e019" />
 
 TrueSight is a media verification app that detects AI-generated (deepfake) images and videos using Reality Defender’s cutting-edge SDKs. Built as a portfolio project, it showcases integration with external AI detection services to fight misinformation and promote content authenticity.
 
