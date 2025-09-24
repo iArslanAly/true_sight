@@ -7,55 +7,77 @@ import 'package:true_sight/features/detection/data/datasources/detection_remote_
 import 'package:true_sight/features/detection/data/models/detection_result_model.dart';
 import 'package:true_sight/features/detection/data/models/signed_url_model.dart';
 
-class DetectionRemoteDatasourceImpl implements DetectionRemoteDataSource {
-  final DioClient _dioClient;
-
-  DetectionRemoteDatasourceImpl(this._dioClient);
+class DetectionRemoteDataSourceImpl implements DetectionRemoteDataSource {
+  final DioClient dioClient;
+  DetectionRemoteDataSourceImpl(this.dioClient);
 
   @override
   Future<SignedUrlModel> getSignedUrl(File file) async {
-    final response = await _dioClient.postJson(
-      '/files/aws-presigned',
-      data: {'fileName': file.path.split('/').last},
-    );
+    try {
+      final response = await dioClient.postJson(
+        '/files/aws-presigned',
+        data: {'fileName': file.path.split('/').last},
+      );
 
-    // ignore: unrelated_type_equality_checks
-    if (response != 200 || response['data'] == null) {
-      throw SignedUrlException(response['message']);
+      if (response['data'] == null) {
+        throw SignedUrlException('Missing data in signed-url response');
+      }
+      final data = response['data'];
+      if (data['signedUrl'] == null || data['requestId'] == null) {
+        throw SignedUrlException('Invalid signed URL response');
+      }
+      return SignedUrlModel.fromJson(data);
+    } on DioException catch (e) {
+      throw SignedUrlException(_mapDioError(e));
     }
-
-    return SignedUrlModel.fromJson(response['data']);
   }
 
   @override
   Future<void> uploadVideo(
     String signedUrl,
     File file, {
-    ProgressCallback? onSendProgress, // <── added
+    ProgressCallback? onSendProgress,
   }) async {
     try {
-      await _dioClient.uploadFileToUrl(
+      await dioClient.uploadFileToUrl(
         signedUrl,
         file,
         onSendProgress: onSendProgress,
       );
-    } on MediaException catch (e) {
-      throw UploadException(e.message);
-    } catch (e) {
-      throw UploadException(e.toString());
+    } on DioException catch (e) {
+      throw UploadException(_mapDioError(e));
     }
   }
 
   @override
   Future<DetectionResultModel> analyzeVideo(String requestId) async {
     try {
-      final response = await _dioClient.getJson('/media/users/$requestId');
-      if (response.isEmpty) throw AnalysisException('Empty analysis response');
+      final response = await dioClient.getJson('/media/users/$requestId');
+      if (response.isEmpty) {
+        throw AnalysisException('Empty analysis response');
+      }
       return DetectionResultModel.fromJson(response);
-    } on MediaException catch (e) {
-      throw AnalysisException(e.message);
-    } catch (e) {
-      throw AnalysisException(e.toString());
+    } on DioException catch (e) {
+      throw AnalysisException(_mapDioError(e));
     }
+  }
+}
+
+String _mapDioError(DioException e) {
+  switch (e.type) {
+    case DioExceptionType.connectionTimeout:
+    case DioExceptionType.sendTimeout:
+    case DioExceptionType.receiveTimeout:
+      return 'Connection timed out';
+    case DioExceptionType.badResponse:
+      final status = e.response?.statusCode;
+      final msg = e.response?.data?['message'] ?? e.message;
+      return 'Server error ($status): $msg';
+    case DioExceptionType.connectionError:
+      return 'No internet connection';
+    case DioExceptionType.cancel:
+      return 'Request was cancelled';
+    default:
+      return 'Unexpected error: ${e.message}';
   }
 }

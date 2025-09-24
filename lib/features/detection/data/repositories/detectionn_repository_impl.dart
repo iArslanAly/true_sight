@@ -10,9 +10,9 @@ import 'package:true_sight/features/detection/domain/entities/detection_result_e
 import 'package:true_sight/features/detection/domain/repositories/detection_repository.dart';
 
 class DetectionRepositoryImpl implements DetectionRepository {
-  final DetectionRemoteDataSource _remoteDataSource;
+  final DetectionRemoteDataSource remoteDataSource;
 
-  DetectionRepositoryImpl(this._remoteDataSource);
+  DetectionRepositoryImpl(this.remoteDataSource);
 
   @override
   Future<Either<Failure, DetectionResultEntity>> analyzeVideo(
@@ -20,13 +20,13 @@ class DetectionRepositoryImpl implements DetectionRepository {
     ProgressCallback? onSendProgress,
   }) async {
     try {
-      final signedUrlResponse = await _remoteDataSource.getSignedUrl(file);
-      await _remoteDataSource.uploadVideo(
+      final signedUrlResponse = await remoteDataSource.getSignedUrl(file);
+      await remoteDataSource.uploadVideo(
         signedUrlResponse.signedUrl,
         file,
         onSendProgress: onSendProgress,
       );
-      final resultModel = await _remoteDataSource.analyzeVideo(
+      final resultModel = await remoteDataSource.analyzeVideo(
         signedUrlResponse.requestId,
       );
       return Right(resultModel.toEntity());
@@ -42,7 +42,7 @@ class DetectionRepositoryImpl implements DetectionRepository {
     String requestId,
   ) async {
     try {
-      final resultModel = await _remoteDataSource.analyzeVideo(requestId);
+      final resultModel = await remoteDataSource.analyzeVideo(requestId);
       return Right(resultModel.toEntity());
     } on MediaException catch (e) {
       return Left(MediaExceptionToFailure.map(e));

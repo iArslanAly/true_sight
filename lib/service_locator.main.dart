@@ -18,6 +18,12 @@ Future<void> init() async {
       updateProfile: sl(),
     ),
   );
+  sl.registerFactory(
+    () => DetectionBloc(
+      getDetectionResult: sl(),
+      getDetectionResultHistory: sl(),
+    ),
+  );
 
   /// Use Cases
   sl.registerLazySingleton(() => LoginUser(sl()));
@@ -31,10 +37,15 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetLoggedInUser(sl()));
   sl.registerLazySingleton(() => UpdateProfileImage(sl()));
   sl.registerLazySingleton(() => UpdateProfile(sl()));
+  sl.registerLazySingleton(() => GetDetectionResult(sl()));
+  sl.registerLazySingleton(() => GetDetectionResultHistory(sl()));
 
   /// Repositories
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerLazySingleton<DetectionRepository>(
+    () => DetectionRepositoryImpl(sl()),
   );
 
   ///! Data sources
@@ -47,6 +58,9 @@ Future<void> init() async {
       firebaseStorage: sl(),
     ),
   );
+  sl.registerLazySingleton<DetectionRemoteDataSource>(
+    () => DetectionRemoteDataSourceImpl(sl<DioClient>()),
+  );
 
   //! External dependencies
   sl.registerLazySingleton(() => FirebaseAuth.instance);
@@ -54,4 +68,5 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GoogleSignIn.instance);
   sl.registerLazySingleton(() => Connectivity());
   sl.registerLazySingleton(() => FirebaseStorage.instance);
+  sl.registerLazySingleton<DioClient>(() => DioClient.instance);
 }
