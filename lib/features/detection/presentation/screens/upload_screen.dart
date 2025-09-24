@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:true_sight/core/widgets/appbar.dart';
+
 import 'package:true_sight/features/auth/presentation/bloc/auth_bloc.dart';
 
 class UploadScreen extends StatelessWidget {
@@ -9,6 +11,7 @@ class UploadScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -34,25 +37,39 @@ class UploadScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 40),
 
-            // Upload Card
+            /// Upload Card
             Expanded(
               child: Stack(
                 children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.grey.shade100,
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.upload_file, size: 60, color: Colors.grey),
-                          SizedBox(height: 12),
-                          Text("Tap to upload file or video"),
-                        ],
+                  GestureDetector(
+                    onTap: () {
+                      // Handle tap to upload
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isDarkMode
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        color: isDarkMode ? Colors.grey[800] : Colors.white,
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.upload_file,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 12),
+                            Text("Tap to upload file or video"),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -65,10 +82,15 @@ class UploadScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.pushNamed(context, '/result');
                       },
-                      icon: const Icon(Icons.check_circle),
-                      label: const Text("View Result"),
+                      icon: const Icon(Icons.check_circle, color: Colors.white),
+                      label: const Text(
+                        "View Result",
+                        style: TextStyle(color: Colors.white),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: isDarkMode
+                            ? Colors.green
+                            : Colors.green[700],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
