@@ -8,10 +8,11 @@ class SignedUrlModel extends SignedUrlEntity {
   });
 
   factory SignedUrlModel.fromJson(Map<String, dynamic> json) {
+    final resp = json['response'] as Map<String, dynamic>? ?? {};
     return SignedUrlModel(
-      signedUrl: json['response']['signedUrl'] as String,
-      requestId: json['requestId'] as String,
-      mediaId: json['mediaId'] as String,
+      signedUrl: resp['signedUrl']?.toString() ?? '',
+      requestId: json['requestId']?.toString() ?? '',
+      mediaId: json['mediaId']?.toString() ?? '',
     );
   }
 

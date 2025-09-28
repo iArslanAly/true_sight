@@ -2,8 +2,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:true_sight/core/logging/logger.dart';
 import 'package:true_sight/core/error/media/media_exception.dart';
@@ -103,11 +103,13 @@ class DioClient {
     Map<String, dynamic>? extraHeaders,
   }) async {
     try {
-      final dioForUpload = Dio(BaseOptions(
-        // Uploads can be slow; increase timeouts
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 120),
-      ));
+      final dioForUpload = Dio(
+        BaseOptions(
+          // Uploads can be slow; increase timeouts
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 120),
+        ),
+      );
 
       final options = Options(
         headers: {
@@ -118,9 +120,7 @@ class DioClient {
       );
 
       // Use a Stream so large files don't get double-buffered
-      final stream = Stream<List<int>>.fromIterable(
-        <List<int>>[bytes],
-      );
+      final stream = Stream<List<int>>.fromIterable(<List<int>>[bytes]);
 
       await dioForUpload.put(
         signedUrl,
@@ -138,20 +138,30 @@ class DioClient {
 
   /// Convenience: upload a File (reads bytes then calls putBytesToUrl)
   Future<void> uploadFileToUrl(
-    String signedUrl,
+    String url,
     File file, {
+    Map<String, String>? extraHeaders,
     ProgressCallback? onSendProgress,
-    CancelToken? cancelToken,
-    Map<String, dynamic>? extraHeaders,
   }) async {
-    final bytes = await file.readAsBytes();
-    return putBytesToUrl(
-      signedUrl,
-      bytes,
-      onSendProgress: onSendProgress,
-      cancelToken: cancelToken,
-      extraHeaders: extraHeaders,
-    );
+    final dio = Dio();
+    try {
+      final bytes = await file.readAsBytes();
+      final response = await dio.put(
+        url,
+        data: bytes,
+        options: Options(
+          headers: extraHeaders,
+          responseType: ResponseType.plain,
+        ),
+        onSendProgress: onSendProgress,
+      );
+      debugPrint(
+        'S3 upload response: ${response.statusCode} ${response.statusMessage}',
+      );
+    } catch (e, st) {
+      debugPrint('Upload error: $e\n$st');
+      rethrow;
+    }
   }
 
   /// Ensure the response body is a JSON object and return as Map.
@@ -183,7 +193,9 @@ class DioClient {
       case DioExceptionType.badResponse:
         final status = e.response?.statusCode;
         final raw = e.response?.data;
-        final msg = raw is Map ? raw['message'] ?? e.response?.statusMessage : e.response?.statusMessage;
+        final msg = raw is Map
+            ? raw['message'] ?? e.response?.statusMessage
+            : e.response?.statusMessage;
         return UnknownMediaException('HTTP $status: ${msg ?? e.message}');
       default:
         return UnknownMediaException(e.message ?? 'Unknown network error');

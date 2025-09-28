@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:mime/mime.dart';
+
 import 'package:true_sight/core/error/media/media_exception.dart';
 import 'package:true_sight/core/http/dio_clients.dart';
 import 'package:true_sight/features/detection/data/datasources/detection_remote_data_source.dart';
@@ -19,14 +21,17 @@ class DetectionRemoteDataSourceImpl implements DetectionRemoteDataSource {
         data: {'fileName': file.path.split('/').last},
       );
 
-      if (response['data'] == null) {
-        throw SignedUrlException('Missing data in signed-url response');
-      }
-      final data = response['data'];
-      if (data['signedUrl'] == null || data['requestId'] == null) {
+      print('Signed URL response: $response');
+
+      // Validate fields in their real places
+      if (response['response'] == null ||
+          response['response']['signedUrl'] == null ||
+          response['requestId'] == null ||
+          response['mediaId'] == null) {
         throw SignedUrlException('Invalid signed URL response');
       }
-      return SignedUrlModel.fromJson(data);
+
+      return SignedUrlModel.fromJson(response);
     } on DioException catch (e) {
       throw SignedUrlException(_mapDioError(e));
     }
@@ -39,9 +44,11 @@ class DetectionRemoteDataSourceImpl implements DetectionRemoteDataSource {
     ProgressCallback? onSendProgress,
   }) async {
     try {
+      final mimeType = lookupMimeType(file.path) ?? 'application/octet-stream';
       await dioClient.uploadFileToUrl(
         signedUrl,
         file,
+        extraHeaders: {'Content-Type': mimeType},
         onSendProgress: onSendProgress,
       );
     } on DioException catch (e) {
@@ -51,15 +58,12 @@ class DetectionRemoteDataSourceImpl implements DetectionRemoteDataSource {
 
   @override
   Future<DetectionResultModel> analyzeVideo(String requestId) async {
-    try {
-      final response = await dioClient.getJson('/media/users/$requestId');
-      if (response.isEmpty) {
-        throw AnalysisException('Empty analysis response');
-      }
-      return DetectionResultModel.fromJson(response);
-    } on DioException catch (e) {
-      throw AnalysisException(_mapDioError(e));
-    }
+    await Future.delayed(const Duration(seconds: 2));
+    final response = await dioClient.getJson('/media/users/$requestId');
+    print('Raw analysis response: $response');
+
+    // If the server gives you a valid result right away, just return it
+    return DetectionResultModel.fromJson(response);
   }
 }
 

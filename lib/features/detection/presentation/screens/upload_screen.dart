@@ -14,9 +14,11 @@ import 'package:true_sight/core/widgets/image_picker_helper.dart';
 
 import 'package:true_sight/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:true_sight/features/detection/presentation/bloc/detection_bloc.dart';
+// … all of your imports stay the same …
 
 class UploadScreen extends StatelessWidget {
   const UploadScreen({super.key});
+
   Future<void> _pickImage(BuildContext context, ImageSourceType type) async {
     final permissionCubit = context.read<PermissionCubit>();
 
@@ -105,7 +107,6 @@ class UploadScreen extends StatelessWidget {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -120,7 +121,7 @@ class UploadScreen extends StatelessWidget {
         }
 
         if (status is ApiSuccess) {
-          // Navigate to result page when finished
+          // Automatic navigation when upload succeeds
           context.push('/result');
         }
       },
@@ -196,11 +197,24 @@ class UploadScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 20),
+
+                /// Upload New File button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => _showImageSourceSheet(context),
                     child: const Text("Upload New File"),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                /// NEW: Result Screen button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => context.push('/result'),
+                    child: const Text("Go to Result Screen"),
                   ),
                 ),
               ],

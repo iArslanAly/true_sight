@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:true_sight/core/error/failure.dart';
 import 'package:true_sight/core/error/media/media_exception.dart';
@@ -21,6 +22,8 @@ class DetectionRepositoryImpl implements DetectionRepository {
   }) async {
     try {
       final signedUrlResponse = await remoteDataSource.getSignedUrl(file);
+      debugPrint(' Repository : About to call uploadVideo');
+      debugPrint(' Repository : Signed URL => ${signedUrlResponse.signedUrl}');
       await remoteDataSource.uploadVideo(
         signedUrlResponse.signedUrl,
         file,
@@ -29,6 +32,7 @@ class DetectionRepositoryImpl implements DetectionRepository {
       final resultModel = await remoteDataSource.analyzeVideo(
         signedUrlResponse.requestId,
       );
+      debugPrint(' Repository : Analysis result model => $resultModel');
       return Right(resultModel.toEntity());
     } on MediaException catch (e) {
       return Left(MediaExceptionToFailure.map(e));
